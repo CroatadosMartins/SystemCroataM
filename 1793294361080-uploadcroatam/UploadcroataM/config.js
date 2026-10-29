@@ -5,6 +5,6 @@
 // (se aparecer só "anon public", use essa). NUNCA use a "secret"/"service_role".
 // ─────────────────────────────────────────────────────────────────────────────
 window.UPLOADCROATAM_CONFIG = {
-  SUPABASE_URL: "https://COLE-AQUI-O-ID-DO-PROJETO.supabase.co",
-  SUPABASE_ANON_KEY: "COLE_AQUI_A_PUBLISHABLE_KEY",
+  SUPABASE_URL: "https://urmgwvjgugjlmxtwiuxy.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_nYjx0NnMbTeSd9dx23Mspg_yS0f0VPQ",
 };
