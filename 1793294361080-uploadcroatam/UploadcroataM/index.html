@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UploadcroataM</title>
+  <meta name="theme-color" content="#0F766E" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="UploadcroataM" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #0f766e;
+      --accent-light: #ccfbf1;
+      --accent-strong: #0b5f59;
+      --danger: #b42318;
+      --success: #067647;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+
+    nav { background: var(--panel); border-bottom: 1px solid var(--line); padding: 0 16px; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    nav button { background: none; border: none; border-bottom: 2px solid transparent; padding: 14px 16px; font: 600 0.875rem system-ui; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 140ms; display: flex; align-items: center; gap: 6px; }
+    nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    nav button svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    main { max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+    .card-body { padding: 20px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .card-sub { font-size: 0.875rem; color: var(--muted); margin-bottom: 16px; }
+
+    .drop-zone { border: 2px dashed #d1d5db; border-radius: 10px; background: #f9fafb; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 160ms; display: block; }
+    .drop-zone.drag { border-color: var(--accent); background: var(--accent-light); }
+    .drop-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 1.5rem; font-weight: 700; }
+    .drop-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .drop-note { font-size: 0.85rem; color: var(--muted); }
+    input[type="file"] { display: none; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 40px; border-radius: 8px; padding: 0 16px; font: 600 0.875rem system-ui; cursor: pointer; border: 1px solid transparent; transition: all 120ms; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-strong); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: #fff; border-color: var(--line); color: var(--text); }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-sm { height: 32px; padding: 0 12px; font-size: 0.8rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+    .file-list { display: grid; gap: 10px; margin-top: 14px; }
+    .file-item { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+    .file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .file-name { font-weight: 700; font-size: 0.875rem; word-break: break-all; }
+    .file-size { font-size: 0.8rem; color: var(--muted); flex-shrink: 0; }
+    .progress { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--accent); transition: width 200ms; }
+    .file-msg { font-size: 0.85rem; margin-top: 6px; color: var(--muted); }
+    .file-msg.ok { color: var(--success); }
+    .file-msg.err { color: var(--danger); }
+    .file-link { color: var(--accent-strong); font-weight: 700; text-decoration: none; }
+    .file-link:hover { text-decoration: underline; }
+    .status-text { font-size: 0.875rem; font-weight: 600; color: var(--muted); margin-top: 14px; min-height: 20px; }
+
+    /* CÂMERA */
+    .cam-preview-wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; display: none; }
+    #cameraPreview { width: 100%; display: block; aspect-ratio: 4/3; object-fit: cover; }
+    #photoCanvas { display: none; }
+    #photoResult { display: none; width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+    .cam-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    /* input câmera nativa — visualmente escondido mas funcional */
+    #camInput { display: none; }
+    .cam-info { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #166534; margin-bottom: 14px; line-height: 1.5; }
+
+    /* EDITOR */
+    .editor-toolbar { display: flex; gap: 4px; flex-wrap: wrap; padding: 8px; border-bottom: 1px solid var(--line); }
+    .tool-btn { height: 32px; min-width: 32px; padding: 0 8px; background: none; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font: 600 0.85rem system-ui; color: var(--text); transition: all 100ms; }
+    .tool-btn:hover { background: var(--bg); }
+    .editor-area { min-height: 260px; padding: 16px; outline: none; font-size: 1rem; line-height: 1.7; color: var(--text); }
+    .editor-area h1 { font-size: 1.6rem; line-height: 1.3; margin-bottom: 8px; }
+    .editor-area h2 { font-size: 1.2rem; line-height: 1.4; margin-bottom: 6px; }
+    .editor-area p { margin-bottom: 8px; }
+    .editor-area[data-placeholder]:empty::before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; }
+    .editor-meta { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line); background: #f9fafb; }
+    .editor-meta input { flex: 1; height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; font: 0.875rem system-ui; background: #fff; }
+
+    /* HISTÓRICO */
+    .hist-loading { text-align: center; padding: 30px; color: var(--muted); font-size: 0.9rem; }
+    .hist-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.95rem; }
+    .hist-item { padding: 10px 0; border-bottom: 1px solid var(--line); transition: background 160ms; }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-item.selected { background: var(--accent-light); border-radius: 8px; padding: 10px; margin: 0 -10px; border-bottom-color: transparent; }
+    .hist-item-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .hist-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--accent-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem; }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-name { font-weight: 700; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-date { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .hist-url { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 0 8px; }
+    .hist-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+    .copy-btn { background: none; border: 1px solid var(--line); border-radius: 6px; height: 28px; width: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 100ms; color: var(--muted); text-decoration: none; }
+    .copy-btn:hover { background: var(--bg); color: var(--text); }
+    .copy-btn.copied { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .hist-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+    .badge-foto { background: #ede9fe; color: #6d28d9; }
+    .badge-arq { background: #dbeafe; color: #1d4ed8; }
+    .badge-txt { background: #fef9c3; color: #854d0e; }
+    .hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    /* CARDS POR CATEGORIA (Fotos / Textos / Arquivos) — lado a lado */
+    #histLista { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 96px; align-items: flex-start; }
+    .hist-group-card { flex: 1 1 260px; min-width: 240px; }
+    .hist-group-top { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+    .hist-group-title { font-weight: 700; font-size: 0.95rem; }
+    .hist-group-chevron { flex-shrink: 0; color: var(--muted); transition: transform 160ms; }
+    .hist-group-card.open .hist-group-chevron { transform: rotate(180deg); }
+    .hist-group-search-row { position: relative; margin: 12px 0; }
+    .hist-group-search-row svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--muted); pointer-events: none; }
+    .hist-group-search-row input { width: 100%; height: 34px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px 0 32px; font: 0.8rem system-ui; background: #fff; color: var(--text); }
+    .hist-group-search-row input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .hist-group-list { display: none; }
+    .hist-group-card.open .hist-group-list { display: block; }
+    .hist-group-empty { text-align: center; padding: 12px 0; color: var(--muted); font-size: 0.82rem; }
+    .hist-group-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+    .clear-btn { background: none; border: none; font-size: 0.8rem; color: var(--muted); cursor: pointer; padding: 4px; }
+    .clear-btn:hover { color: var(--danger); }
+
+    /* SYNC badge */
+    .sync-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #166534; margin-left: 8px; vertical-align: middle; }
+
+    /* LOGIN */
+    .login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+    .login-card { width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 28px 24px; text-align: center; }
+    .login-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 1.4rem; }
+    .login-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .login-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+    .login-field { text-align: left; margin-bottom: 14px; }
+    .login-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+    .login-field input { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; font: 0.9rem system-ui; background: #fff; color: var(--text); }
+    .login-field input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .login-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; color: var(--danger); }
+    .logout-btn { margin-left: auto; align-self: center; background: none; border: 1px solid var(--line); border-radius: 8px; height: 32px; padding: 0 12px; font: 600 0.78rem system-ui; color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .logout-btn:hover { background: var(--bg); color: var(--danger); border-color: var(--danger); }
+
+    /* VISUALIZADOR DE TEXTO */
+    .viewer-overlay { display: none; position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 90; align-items: center; justify-content: center; padding: 20px; }
+    .viewer-box { width: 100%; max-width: 640px; max-height: 85vh; background: var(--panel); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+    .viewer-topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .viewer-title { font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .viewer-body { overflow-y: auto; }
+
+    /* STATUS DE ARMAZENAMENTO */
+    .storage-panel { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: #f9fafb; }
+    .storage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .storage-title { font-weight: 700; font-size: 0.875rem; }
+    .storage-nums { font-size: 0.8rem; color: var(--muted); }
+    .storage-bar { height: 8px; border-radius: 999px; background: #e5e7eb; overflow: hidden; margin-bottom: 12px; }
+    .storage-bar-fill { height: 100%; width: 0%; background: var(--accent); transition: width 300ms; }
+    .storage-bar-fill.warn { background: #d97706; }
+    .storage-bar-fill.danger { background: var(--danger); }
+    .storage-big-list { display: grid; gap: 6px; }
+    .storage-big-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.8rem; padding: 6px 8px; border-radius: 6px; background: #fff; border: 1px solid var(--line); }
+    .storage-big-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .storage-big-size { color: var(--muted); flex-shrink: 0; font-weight: 600; }
+    .storage-empty { font-size: 0.8rem; color: var(--muted); text-align: center; padding: 6px; }
+
+    /* NAVEGAÇÃO FLUTUANTE (histórico) */
+    .scroll-nav { position: fixed; right: 18px; bottom: 24px; display: none; flex-direction: column; gap: 8px; z-index: 40; }
+    .scroll-nav.show { display: flex; }
+    .scroll-nav-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
+    .scroll-nav-btn:hover { background: var(--bg); }
+
+    /* COMPUTADOR / RECADOS / AVISOS */
+    .pc-chip { align-self: center; margin-left: auto; background: var(--accent-light); color: var(--accent-strong); border: none; border-radius: 999px; height: 30px; padding: 0 12px; font: 600 0.78rem system-ui; cursor: pointer; white-space: nowrap; }
+    .pc-chip + .logout-btn { margin-left: 8px; }
+    .hist-pc { font-size: 0.72rem; color: var(--accent-strong); font-weight: 600; }
+    .recado-form { display: flex; gap: 8px; }
+    .recado-form textarea { flex: 1; min-height: 70px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 0.9rem system-ui; resize: vertical; }
+    .recado-list { display: grid; gap: 10px; margin-top: 16px; }
+    .recado { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fff; }
+    .recado.meu { background: #f0fdfa; border-color: #99f6e4; }
+    .recado-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+    .recado-top b { color: var(--accent-strong); }
+    .recado-texto { white-space: pre-wrap; word-break: break-word; font-size: 0.92rem; line-height: 1.5; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; box-shadow: var(--shadow); z-index: 120; display: none; max-width: calc(100% - 32px); }
+    .toast.show { display: block; }
+    .nav-dot { display: none; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+    .nav-dot.show { display: inline-block; }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon">🔒</div>
+    <p class="login-title">UploadcroataM</p>
+    <p class="login-sub">Arquivos e recados entre os computadores da unidade.<br>Entre com o CPF e a senha.</p>
+    <form id="loginForm">
+      <div class="login-field">
+        <label for="loginCpf">CPF</label>
+        <input id="loginCpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00" required />
+      </div>
+      <div class="login-field">
+        <label for="loginSenha">Senha</label>
+        <input id="loginSenha" type="password" autocomplete="current-password" placeholder="Sua senha" required />
+      </div>
+      <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%; justify-content:center;">Entrar</button>
+      <p class="login-msg" id="loginMsg"></p>
+    </form>
+  </div>
+</div>
+
+<div id="appShell" style="display:none;">
+
+<nav>
+  <button class="active" onclick="showTab('upload',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload
+  </button>
+  <button onclick="showTab('camera',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    Câmera
+  </button>
+  <button onclick="showTab('texto',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Texto
+  </button>
+  <button onclick="showTab('recados',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Recados <span class="nav-dot" id="dotRecados"></span>
+  </button>
+  <button onclick="showTab('historico',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Histórico
+  </button>
+  <button class="pc-chip" id="pcChip" title="Trocar o nome deste computador" onclick="definirComputador(true)">🖥️ —</button>
+  <button class="logout-btn" onclick="sairApp()">Sair</button>
+</nav>
+
+<main>
+
+  <!-- ===== UPLOAD ===== -->
+  <div id="tab-upload" class="tab active">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-title">Enviar arquivos</p>
+        <p class="card-sub">Fotos, PDFs e documentos. Todos os computadores da unidade veem o que for enviado aqui.</p>
+        <label class="drop-zone" id="dropZone" for="fileInput">
+          <div class="drop-icon">+</div>
+          <p class="drop-title">Toque para escolher arquivos</p>
+          <p class="drop-note">No computador, também pode arrastar e soltar aqui.</p>
+        </label>
+        <input type="file" id="fileInput" multiple />
+        <div class="actions">
+          <label class="btn btn-outline" for="fileInput">Escolher arquivos</label>
+          <button class="btn btn-primary" id="uploadBtn" disabled onclick="iniciarUpload()">Enviar</button>
+        </div>
+        <p class="status-text" id="uploadStatus">Nenhum arquivo selecionado.</p>
+        <div class="file-list" id="fileList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CÂMERA ===== -->
+  <div id="tab-camera" class="tab">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-title">Fotografar documento</p>
+        <p class="card-sub">Abre direto a câmera do celular — sem pedir permissão extra.</p>
+
+        <div class="cam-info">
+          📱 No celular: toque em <strong>"Tirar foto"</strong> para abrir a câmera traseira diretamente.<br>
+          🖥️ No computador: irá abrir a galeria/câmera disponível.
+        </div>
+
+        <!-- input nativo — método mais confiável em qualquer browser mobile -->
+        <input type="file" id="camInput" accept="image/*" capture="environment" />
+
+        <div id="photoWrap" style="display:none; margin-bottom:12px;">
+          <img id="photoResult" style="width:100%; border-radius:10px; border:1px solid var(--line);" alt="Foto capturada" />
+        </div>
+
+        <div class="cam-controls">
+          <label class="btn btn-primary" for="camInput" id="btnTirarFoto">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Tirar foto
+          </label>
+          <button class="btn btn-outline" id="btnNovaFoto" style="display:none" onclick="novaFoto()">Nova foto</button>
+          <button class="btn btn-primary" id="btnEnviarFoto" style="display:none" onclick="enviarFoto()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Enviar foto
+          </button>
+        </div>
+        <p class="status-text" id="camStatus"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TEXTO ===== -->
+  <div id="tab-texto" class="tab">
+    <div class="card">
+      <div class="editor-toolbar">
+        <button class="tool-btn" title="Cabeçalho 1" onclick="fmt('formatBlock','H1')"><b>H1</b></button>
+        <button class="tool-btn" title="Cabeçalho 2" onclick="fmt('formatBlock','H2')"><b>H2</b></button>
+        <button class="tool-btn" title="Negrito" onclick="fmt('bold')"><b>B</b></button>
+        <button class="tool-btn" title="Itálico" onclick="fmt('italic')"><i>I</i></button>
+        <button class="tool-btn" title="Sublinhado" onclick="fmt('underline')"><u>U</u></button>
+        <button class="tool-btn" title="Lista" onclick="fmt('insertUnorderedList')">• Lista</button>
+        <button class="tool-btn" title="Limpar" onclick="limparEditor()">✕ Limpar</button>
+      </div>
+      <div class="editor-area" id="editor" contenteditable="true" data-placeholder="Escreva aqui suas anotações, resumos ou qualquer texto..."></div>
+      <div class="editor-meta">
+        <input type="text" id="nomeArquivoTxt" placeholder="Nome do arquivo (ex: aula-matematica)" />
+        <button class="btn btn-primary btn-sm" onclick="salvarTexto()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar
+        </button>
+      </div>
+      <div style="padding: 10px 16px;">
+        <p class="status-text" id="textoStatus"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RECADOS ===== -->
+  <div id="tab-recados" class="tab">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-title">Recados entre computadores</p>
+        <p class="card-sub">Mensagem curta que aparece na hora em todos os computadores conectados.</p>
+        <div class="recado-form">
+          <textarea id="recadoTexto" maxlength="1000" placeholder="Ex.: Arquivo da escala já está no Histórico."></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="enviarRecado()">Enviar recado</button>
+        </div>
+        <p class="status-text" id="recadoStatus"></p>
+        <div class="recado-list" id="recadoLista"><p class="hist-loading">Carregando...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HISTÓRICO ===== -->
+  <div id="tab-historico" class="tab">
+    <div class="card">
+      <div class="card-body">
+        <div class="hist-header">
+          <div>
+            <span class="card-title" style="display:inline">Histórico</span>
+            <span class="sync-badge">☁️ sincronizado</span>
+          </div>
+          <button class="clear-btn" onclick="limparHistorico()">Limpar tudo</button>
+        </div>
+
+        <div class="storage-panel" id="storagePanel">
+          <div class="storage-head">
+            <span class="storage-title">📦 Armazenamento</span>
+            <span class="storage-nums" id="storageNums">Calculando...</span>
+          </div>
+          <div class="storage-bar"><div class="storage-bar-fill" id="storageBarFill"></div></div>
+          <div class="storage-big-list" id="storageBigList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="histLista"><p class="hist-loading">Carregando...</p></div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="scroll-nav" id="scrollNav">
+  <button class="scroll-nav-btn" title="Ir para o topo" onclick="scrollTopo()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+  </button>
+  <button class="scroll-nav-btn" title="Ir para o fim" onclick="scrollFim()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+  </button>
+</div>
+
+<div class="viewer-overlay" id="viewerModal" onclick="if(event.target===this) fecharVisualizador()">
+  <div class="viewer-box">
+    <div class="viewer-topbar">
+      <span class="viewer-title" id="viewerTitle"></span>
+      <button class="copy-btn" title="Fechar" onclick="fecharVisualizador()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="viewer-body editor-area" id="viewerBody"></div>
+  </div>
+</div>
+
+</div>
+
+<script src="config.js"></script>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  // ── Configuração Supabase ──────────────────────────────────────────────────
+  // Os dados do projeto Supabase da unidade ficam em config.js (edite só lá).
+  const SUPABASE_URL      = window.UPLOADCROATAM_CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.UPLOADCROATAM_CONFIG.SUPABASE_ANON_KEY;
+  const BUCKET           = "arquivos";
+  const HIST_TABLE       = "historico_arquivos"; // criada por supabase/01_tabelas.sql
+  const RECADOS_TABLE    = "recados";
+  // Limite do plano Free do Supabase (1 GB). O Supabase não expõe esse valor
+  // por API pública — se o plano mudar, ajuste aqui.
+  const STORAGE_QUOTA_BYTES = 1024 * 1024 * 1024;
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── Login por CPF ──────────────────────────────────────────────────────────
+  // O CPF digitado vira e-mail: "12345678900" -> "12345678900@equipeaps.local".
+  // A conta precisa existir em Authentication > Users do projeto Supabase da
+  // unidade, com esse e-mail e a senha escolhida (passo a passo no guia).
+  function loginEmailFromCpf(value) {
+    const cpf = String(value || '').replace(/\D/g, '');
+    return cpf.length === 11 ? `${cpf}@equipeaps.local` : null;
+  }
+
+  let appIniciado = false;
+  function mostrarApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = '';
+    if (!appIniciado) {
+      appIniciado = true;
+      definirComputador(false);
+      iniciarTempoReal();
+    }
+  }
+
+  // ── Nome deste computador ─────────────────────────────────────────────────
+  // Cada PC guarda o próprio nome (ex.: "Recepção") no navegador. Ele vai junto
+  // em cada envio e recado, para todos saberem de onde veio.
+  function nomeComputador() {
+    try { return localStorage.getItem('croatam_pc') || ''; } catch { return ''; }
+  }
+
+  window.definirComputador = function(forcar) {
+    let nome = nomeComputador();
+    if (!nome || forcar) {
+      const novo = prompt('Nome deste computador (ex.: Recepção, Sala de Vacina, Consultório 2):', nome || '');
+      if (novo !== null && novo.trim()) nome = novo.trim().slice(0, 40);
+      try { localStorage.setItem('croatam_pc', nome); } catch {}
+    }
+    document.getElementById('pcChip').textContent = '🖥️ ' + (nome || 'Sem nome');
+  };
+
+  // ── Tempo real: avisa quando outro computador envia algo ──────────────────
+  function aviso(texto) {
+    const t = document.getElementById('toast');
+    t.textContent = texto;
+    t.classList.add('show');
+    clearTimeout(aviso._timer);
+    aviso._timer = setTimeout(() => t.classList.remove('show'), 5000);
+  }
+
+  function abaAtiva(id) {
+    return document.getElementById('tab-' + id).classList.contains('active');
+  }
+
+  function iniciarTempoReal() {
+    sb.channel('croatam')
+      .on('postgres_changes', { event: '*', schema: 'public', table: HIST_TABLE }, (p) => {
+        if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador())
+          aviso(`📥 ${p.new.computador || 'Outro computador'} enviou: ${p.new.nome}`);
+        if (abaAtiva('historico')) { renderHist(); renderStorageStatus(); }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: RECADOS_TABLE }, (p) => {
+        if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador()) {
+          aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${p.new.texto.slice(0, 80)}`);
+          if (!abaAtiva('recados')) document.getElementById('dotRecados').classList.add('show');
+        }
+        if (abaAtiva('recados')) renderRecados();
+      })
+      .subscribe();
+  }
+
+  // ── Recados ───────────────────────────────────────────────────────────────
+  async function renderRecados() {
+    const el = document.getElementById('recadoLista');
+    const { data, error } = await sb.from(RECADOS_TABLE)
+      .select('*').order('criado_em', { ascending: false }).limit(100);
+    if (error) { el.innerHTML = '<p class="hist-empty">Não foi possível carregar os recados.</p>'; return; }
+    if (!data.length) { el.innerHTML = '<p class="hist-empty">Nenhum recado ainda.</p>'; return; }
+    const meu = nomeComputador();
+    el.innerHTML = data.map(r => `
+      <div class="recado${r.computador === meu ? ' meu' : ''}">
+        <div class="recado-top">
+          <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b> · ${new Date(r.criado_em).toLocaleString('pt-BR')}</span>
+          <button class="clear-btn" title="Apagar recado" onclick="apagarRecado(${r.id})">Apagar</button>
+        </div>
+        <div class="recado-texto">${escHtml(r.texto)}</div>
+      </div>`).join('');
+  }
+  window.renderRecados = renderRecados;
+
+  window.enviarRecado = async function() {
+    const campo = document.getElementById('recadoTexto');
+    const status = document.getElementById('recadoStatus');
+    const texto = campo.value.trim();
+    if (!texto) { status.textContent = 'Escreva o recado antes de enviar.'; return; }
+    status.textContent = 'Enviando...';
+    const { error } = await sb.from(RECADOS_TABLE).insert({ texto, computador: nomeComputador() });
+    if (error) { status.textContent = `Erro: ${error.message}`; return; }
+    campo.value = '';
+    status.textContent = 'Recado enviado.';
+    renderRecados();
+  };
+
+  window.apagarRecado = async function(id) {
+    if (!confirm('Apagar este recado para todos os computadores?')) return;
+    await sb.from(RECADOS_TABLE).delete().eq('id', id);
+    renderRecados();
+  };
+
+  function mostrarLogin() {
+    document.getElementById('appShell').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) mostrarApp(); else mostrarLogin();
+  });
+
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) mostrarApp(); else mostrarLogin();
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const msg = document.getElementById('loginMsg');
+    const btn = document.getElementById('loginBtn');
+    const cpf = document.getElementById('loginCpf').value;
+    const senha = document.getElementById('loginSenha').value;
+    const email = loginEmailFromCpf(cpf);
+    if (!email) { msg.textContent = 'Informe um CPF com 11 números.'; return; }
+    btn.disabled = true;
+    msg.style.color = 'var(--muted)';
+    msg.textContent = 'Validando acesso...';
+    const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+    btn.disabled = false;
+    if (error) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Não foi possível entrar. Confira o CPF e a senha.';
+      return;
+    }
+    msg.textContent = '';
+  });
+
+  window.sairApp = async function() {
+    await sb.auth.signOut();
+  };
+
+  // ── Utilitários ───────────────────────────────────────────────────────────
+  function fmtBytes(b) {
+    if (b < 1024) return `${b} B`;
+    if (b < 1048576) return `${(b/1024).toFixed(1)} KB`;
+    if (b < 1073741824) return `${(b/1048576).toFixed(1)} MB`;
+    return `${(b/1073741824).toFixed(2)} GB`;
+  }
+
+  function safeName(original, ext) {
+    const base = original.replace(/\.[^.]+$/,'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9_-]/g,'-').replace(/-+/g,'-').toLowerCase() || 'arquivo';
+    return `${Date.now()}-${base}.${ext}`;
+  }
+
+  // ── Histórico no Supabase (tabela) ────────────────────────────────────────
+  // A tabela precisa existir no Supabase. Veja o README abaixo no código.
+  // Se a tabela ainda não existir, cai silenciosamente pro localStorage.
+
+  async function adicionarHist(nome, tipo, url) {
+    const entrada = { nome, tipo, url, computador: nomeComputador(), criado_em: new Date().toISOString() };
+    try {
+      const { error } = await sb.from(HIST_TABLE).insert(entrada);
+      if (error) throw error;
+    } catch {
+      // fallback: localStorage
+      const h = getHistLocal();
+      h.unshift({ ...entrada, data: new Date().toLocaleString('pt-BR') });
+      if (h.length > 200) h.pop();
+      localStorage.setItem('croatam_hist', JSON.stringify(h));
+    }
+    if (document.getElementById('tab-historico').classList.contains('active')) {
+      await renderHist();
+      await renderStorageStatus();
+    }
+  }
+  window.adicionarHist = adicionarHist;
+
+  function getHistLocal() {
+    try { return JSON.parse(localStorage.getItem('croatam_hist') || '[]'); } catch { return []; }
+  }
+
+  async function renderHist() {
+    const el = document.getElementById('histLista');
+    el.innerHTML = '<p class="hist-loading">Carregando...</p>';
+
+    let items = [];
+    try {
+      const { data, error } = await sb
+        .from(HIST_TABLE)
+        .select('*')
+        .order('criado_em', { ascending: false })
+        .limit(300);
+      if (!error && data) items = data;
+    } catch {}
+
+    // merge com localStorage (caso a tabela ainda não exista)
+    const local = getHistLocal();
+    if (items.length === 0 && local.length > 0) items = local;
+
+    if (items.length === 0) {
+      el.innerHTML = '<p class="hist-empty">Nenhum arquivo enviado ainda.<br>Seus links aparecerão aqui após o primeiro envio.</p>';
+      gruposAtuais = { foto: [], txt: [], arq: [] };
+      return;
+    }
+
+    // tamanhos reais vindos do Storage, para exibir MB usados por categoria
+    let tamanhos = {};
+    try {
+      const arquivosStorage = await listarTodosArquivosStorage();
+      arquivosStorage.forEach(f => { tamanhos[f.name] = f.metadata?.size || 0; });
+    } catch {}
+
+    gruposAtuais = { foto: [], txt: [], arq: [] };
+    items.forEach(item => {
+      const chave = (item.tipo === 'foto' || item.tipo === 'txt') ? item.tipo : 'arq'; // "outros" cai em Arquivos
+      gruposAtuais[chave].push(item);
+    });
+
+    el.innerHTML = GRUPOS_HIST.map(grupo => {
+      const doGrupo = gruposAtuais[grupo.tipo];
+      const totalBytes = doGrupo.reduce((soma, item) => {
+        const path = pathFromUrl(item.url);
+        return soma + (path && tamanhos[path] ? tamanhos[path] : 0);
+      }, 0);
+      const estado = estadoGrupos[grupo.tipo];
+      return `
+      <div class="card hist-group-card${estado.open ? ' open' : ''}" data-tipo="${grupo.tipo}">
+        <div class="card-body">
+          <button class="hist-group-top" type="button" onclick="toggleGrupoLista('${grupo.tipo}')">
+            <span class="hist-group-title">${grupo.icon} ${grupo.label}</span>
+            <svg class="hist-group-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="hist-group-search-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" value="${escHtml(estado.busca)}" placeholder="Buscar em ${grupo.label.toLowerCase()}..." oninput="filtrarGrupo('${grupo.tipo}', this.value)" />
+          </div>
+          <div class="hist-group-list" id="grupoLista-${grupo.tipo}">${corpoGrupoHtml(grupo.tipo)}</div>
+          <div class="hist-group-footer">
+            <span>${doGrupo.length} arquivo${doGrupo.length === 1 ? '' : 's'}</span>
+            <span>${fmtBytes(totalBytes)}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  window.renderHist = renderHist;
+
+  const GRUPOS_HIST = [
+    { tipo: 'foto', label: 'Fotos', icon: '📷' },
+    { tipo: 'txt',  label: 'Textos', icon: '📝' },
+    { tipo: 'arq',  label: 'Arquivos', icon: '📄' },
+  ];
+
+  const TIPO_ICONS  = { foto: '📷', arq: '📄', txt: '📝' };
+  const TIPO_BADGES = { foto: 'badge-foto', arq: 'badge-arq', txt: 'badge-txt' };
+  const TIPO_LABELS = { foto: 'Foto', arq: 'Arquivo', txt: 'Texto' };
+
+  // itens agrupados por categoria (a partir do último renderHist) e estado de cada card
+  let gruposAtuais = { foto: [], txt: [], arq: [] };
+  let estadoGrupos = {
+    foto: { open: false, busca: '' },
+    txt:  { open: false, busca: '' },
+    arq:  { open: false, busca: '' },
+  };
+
+  function corpoGrupoHtml(tipo) {
+    const termo = (estadoGrupos[tipo].busca || '').trim().toLowerCase();
+    const itens = gruposAtuais[tipo].filter(item => !termo || (item.nome || '').toLowerCase().includes(termo));
+    return itens.length
+      ? itens.map(histItemHtml).join('')
+      : `<p class="hist-group-empty">${termo ? 'Nenhum resultado para essa busca.' : 'Nenhum item nesta categoria.'}</p>`;
+  }
+
+  window.toggleGrupoLista = function(tipo) {
+    estadoGrupos[tipo].open = !estadoGrupos[tipo].open;
+    const card = document.querySelector(`.hist-group-card[data-tipo="${tipo}"]`);
+    if (card) card.classList.toggle('open', estadoGrupos[tipo].open);
+  };
+
+  window.filtrarGrupo = function(tipo, termo) {
+    estadoGrupos[tipo].busca = termo;
+    const lista = document.getElementById(`grupoLista-${tipo}`);
+    if (lista) lista.innerHTML = corpoGrupoHtml(tipo);
+    if (termo.trim()) {
+      estadoGrupos[tipo].open = true;
+      const card = document.querySelector(`.hist-group-card[data-tipo="${tipo}"]`);
+      if (card) card.classList.add('open');
+    }
+  };
+
+  function histItemHtml(item) {
+    const data = item.criado_em
+      ? new Date(item.criado_em).toLocaleString('pt-BR')
+      : (item.data || '');
+    const selected = item.url === ultimoSelecionadoUrl ? ' selected' : '';
+    return `
+      <div class="hist-item${selected}" data-url="${escHtml(item.url)}">
+        <div class="hist-item-top">
+          <div class="hist-icon">${TIPO_ICONS[item.tipo] || '📄'}</div>
+          <div class="hist-info">
+            <div class="hist-name">
+              ${escHtml(item.nome)}
+              <span class="hist-badge ${TIPO_BADGES[item.tipo] || 'badge-arq'}">${TIPO_LABELS[item.tipo] || 'Arquivo'}</span>
+            </div>
+            <div class="hist-date">${data}${item.computador ? ` · <span class="hist-pc">🖥️ ${escHtml(item.computador)}</span>` : ''}</div>
+          </div>
+        </div>
+        <div class="hist-url">${escHtml(item.url)}</div>
+        <div class="hist-acts">
+          <button class="copy-btn" title="Copiar link" data-url="${escHtml(item.url)}" onclick="copiarLink(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="copy-btn" title="Renomear" data-id="${item.id ?? ''}" data-url="${escHtml(item.url)}" data-nome="${escHtml(item.nome)}" onclick="renomearItem(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="copy-btn" title="Visualizar" data-url="${escHtml(item.url)}" data-nome="${escHtml(item.nome)}" data-tipo="${escHtml(item.tipo)}" onclick="visualizarItem(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <a href="${escHtml(item.url)}" target="_blank" rel="noopener" class="copy-btn" title="Abrir arquivo" data-url="${escHtml(item.url)}" onclick="marcarSelecionado(this.dataset.url)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <button class="copy-btn" title="Excluir" data-id="${item.id ?? ''}" data-url="${escHtml(item.url)}" onclick="excluirItem(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }
+
+  // ── "Selecionado por último" ────────────────────────────────────────────
+  let ultimoSelecionadoUrl = null;
+  try { ultimoSelecionadoUrl = localStorage.getItem('croatam_ultimo_sel') || null; } catch {}
+
+  window.marcarSelecionado = function(url) {
+    ultimoSelecionadoUrl = url;
+    try { localStorage.setItem('croatam_ultimo_sel', url); } catch {}
+    document.querySelectorAll('.hist-item').forEach(el => {
+      el.classList.toggle('selected', el.dataset.url === url);
+    });
+  };
+
+  window.visualizarItem = async function(btn) {
+    const url  = btn.dataset.url;
+    const nome = btn.dataset.nome;
+    const tipo = btn.dataset.tipo;
+    marcarSelecionado(url);
+    document.getElementById('viewerTitle').textContent = nome;
+    const body = document.getElementById('viewerBody');
+    document.getElementById('viewerModal').style.display = 'flex';
+
+    if (tipo === 'foto') {
+      body.innerHTML = `<img src="${escHtml(url)}" alt="${escHtml(nome)}" style="display:block;max-width:100%;border-radius:8px;margin:0 auto;">`;
+      return;
+    }
+    if (tipo === 'txt') {
+      body.innerHTML = 'Carregando...';
+      try {
+        const res = await fetch(url);
+        body.innerHTML = await res.text();
+      } catch {
+        body.textContent = 'Não foi possível carregar o conteúdo.';
+      }
+      return;
+    }
+    // arq: pdf costuma abrir direto no iframe; outros formatos caem no link de baixo
+    body.innerHTML = `
+      <iframe src="${escHtml(url)}" style="width:100%;height:65vh;border:none;border-radius:8px;"></iframe>
+      <p style="margin-top:10px;font-size:0.8rem;color:var(--muted);">Se o arquivo não aparecer acima, <a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent-strong);font-weight:600;">abra em uma nova aba</a>.</p>`;
+  };
+
+  window.fecharVisualizador = function() {
+    document.getElementById('viewerModal').style.display = 'none';
+  };
+
+  window.renomearItem = async function(btn) {
+    const id = btn.dataset.id;
+    const url = btn.dataset.url;
+    const nomeAtual = btn.dataset.nome;
+    const novoNome = prompt('Novo nome para o arquivo:', nomeAtual);
+    if (novoNome === null) return;
+    const nomeLimpo = novoNome.trim();
+    if (!nomeLimpo || nomeLimpo === nomeAtual) return;
+
+    if (id) {
+      try {
+        // .select() é essencial aqui: sem ele, um UPDATE bloqueado por RLS
+        // "funciona" (sem erro) mas altera 0 linhas — silenciosamente.
+        const { data, error } = await sb.from(HIST_TABLE).update({ nome: nomeLimpo }).eq('id', id).select();
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          alert('O servidor não confirmou a alteração (provável falta de permissão de UPDATE na tabela historico_arquivos). Nada foi renomeado.');
+          return;
+        }
+      } catch {
+        alert('Não foi possível renomear. Tente novamente.');
+        return;
+      }
+    } else {
+      const local = getHistLocal().map(entry =>
+        entry.url === url ? { ...entry, nome: nomeLimpo } : entry);
+      localStorage.setItem('croatam_hist', JSON.stringify(local));
+    }
+
+    await renderHist();
+    await renderStorageStatus();
+  };
+
+  window.excluirItem = async function(btn) {
+    if (!confirm('Excluir este item do histórico?\n(O arquivo também é removido do armazenamento)')) return;
+    const id  = btn.dataset.id;
+    const url = btn.dataset.url;
+
+    if (id) {
+      try { await sb.from(HIST_TABLE).delete().eq('id', id); } catch {}
+    }
+
+    const prefix = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
+    if (url.startsWith(prefix)) {
+      const path = decodeURIComponent(url.slice(prefix.length));
+      try { await sb.storage.from(BUCKET).remove([path]); } catch {}
+    }
+
+    const local = getHistLocal().filter(entry => entry.url !== url);
+    localStorage.setItem('croatam_hist', JSON.stringify(local));
+
+    await renderHist();
+    await renderStorageStatus();
+  };
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.copiarLink = function(btn) {
+    const url = btn.dataset.url;
+    navigator.clipboard.writeText(url).then(() => {
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1800);
+    });
+  };
+
+  window.limparHistorico = async function() {
+    if (!confirm('Apagar todo o histórico?\n(Remove do servidor e do dispositivo)')) return;
+    try { await sb.from(HIST_TABLE).delete().neq('id', 0); } catch {}
+    localStorage.removeItem('croatam_hist');
+    renderHist();
+  };
+
+  // ── Status de armazenamento (Supabase Storage) ──────────────────────────────
+  function pathFromUrl(url) {
+    const prefix = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
+    return url && url.startsWith(prefix) ? decodeURIComponent(url.slice(prefix.length)) : null;
+  }
+
+  async function listarTodosArquivosStorage() {
+    let all = [];
+    let offset = 0;
+    const limit = 1000;
+    while (true) {
+      const { data, error } = await sb.storage.from(BUCKET).list('', {
+        limit, offset, sortBy: { column: 'name', order: 'asc' }
+      });
+      if (error || !data || data.length === 0) break;
+      all = all.concat(data.filter(f => f.metadata)); // ignora "pastas"
+      if (data.length < limit) break;
+      offset += limit;
+    }
+    return all;
+  }
+
+  async function renderStorageStatus() {
+    const numsEl = document.getElementById('storageNums');
+    const fillEl = document.getElementById('storageBarFill');
+    const listEl = document.getElementById('storageBigList');
+    numsEl.textContent = 'Calculando...';
+    listEl.innerHTML = '';
+
+    let arquivosStorage = [];
+    try { arquivosStorage = await listarTodosArquivosStorage(); }
+    catch { numsEl.textContent = 'Indisponível'; return; }
+
+    const totalBytes = arquivosStorage.reduce((soma, f) => soma + (f.metadata?.size || 0), 0);
+    const pct = Math.min(100, (totalBytes / STORAGE_QUOTA_BYTES) * 100);
+
+    fillEl.style.width = `${pct}%`;
+    fillEl.className = 'storage-bar-fill' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
+    numsEl.textContent = `${fmtBytes(totalBytes)} de ${fmtBytes(STORAGE_QUOTA_BYTES)} (${pct.toFixed(1)}%)`;
+
+    if (arquivosStorage.length === 0) {
+      listEl.innerHTML = '<p class="storage-empty">Nenhum arquivo no armazenamento.</p>';
+      return;
+    }
+
+    // nomes amigáveis a partir do histórico
+    let mapaNomes = {};
+    try {
+      const { data } = await sb.from(HIST_TABLE).select('nome,url').limit(1000);
+      (data || []).forEach(item => {
+        const path = pathFromUrl(item.url);
+        if (path) mapaNomes[path] = item.nome;
+      });
+    } catch {}
+
+    const maiores = [...arquivosStorage]
+      .sort((a, b) => (b.metadata?.size || 0) - (a.metadata?.size || 0))
+      .slice(0, 8);
+
+    listEl.innerHTML = maiores.map(f => {
+      const nome = mapaNomes[f.name] || f.name;
+      return `
+      <div class="storage-big-item">
+        <span class="storage-big-name" title="${escHtml(nome)}">${escHtml(nome)}</span>
+        <span class="storage-big-size">${fmtBytes(f.metadata?.size || 0)}</span>
+      </div>`;
+    }).join('');
+  }
+  window.renderStorageStatus = renderStorageStatus;
+
+  // ── Navegação (topo/fim) ─────────────────────────────────────────────────
+  window.scrollTopo = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  window.scrollFim = function() {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  };
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  window.showTab = function(id, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    document.getElementById('scrollNav').classList.toggle('show', id === 'historico');
+    if (id === 'historico') {
+      renderHist();
+      renderStorageStatus();
+    }
+    if (id === 'recados') {
+      document.getElementById('dotRecados').classList.remove('show');
+      renderRecados();
+    }
+  };
+
+  // ── Upload de arquivos ────────────────────────────────────────────────────
+  let arquivos = [];
+  const fileInput = document.getElementById('fileInput');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const dropZone  = document.getElementById('dropZone');
+
+  fileInput.addEventListener('change', () => setArquivos(fileInput.files));
+
+  ['dragenter','dragover'].forEach(e =>
+    dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(e =>
+    dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('drag'); }));
+  dropZone.addEventListener('drop', ev => setArquivos(ev.dataTransfer.files));
+
+  function setArquivos(list) {
+    arquivos = Array.from(list);
+    const n = arquivos.length;
+    uploadBtn.disabled = n === 0;
+    document.getElementById('uploadStatus').textContent =
+      n === 0 ? 'Nenhum arquivo selecionado.' : `${n} arquivo${n>1?'s':''} pronto${n>1?'s':''} para enviar.`;
+    const fl = document.getElementById('fileList');
+    fl.innerHTML = '';
+    arquivos.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <div class="file-row">
+          <span class="file-name"></span>
+          <span class="file-size">${fmtBytes(f.size)}</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:0%"></div></div>
+        <p class="file-msg">Aguardando envio.</p>`;
+      div.querySelector('.file-name').textContent = f.name;
+      fl.appendChild(div);
+    });
+  }
+
+  window.iniciarUpload = async function() {
+    if (!arquivos.length) return;
+    uploadBtn.disabled = true;
+    document.getElementById('uploadStatus').textContent = 'Enviando...';
+    const itens = document.querySelectorAll('.file-item');
+    let ok = 0;
+    for (const [i, file] of arquivos.entries()) {
+      const el  = itens[i];
+      const bar = el.querySelector('.progress-bar');
+      const msg = el.querySelector('.file-msg');
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+      const nome = safeName(file.name, ext);
+      bar.style.width = '40%';
+      msg.className = 'file-msg'; msg.textContent = 'Enviando...';
+      const { error } = await sb.storage.from(BUCKET).upload(nome, file);
+      if (error) {
+        bar.style.width = '100%';
+        msg.className = 'file-msg err';
+        msg.textContent = `Erro: ${error.message}`;
+        continue;
+      }
+      const { data } = sb.storage.from(BUCKET).getPublicUrl(nome);
+      bar.style.width = '100%';
+      msg.className = 'file-msg ok';
+      msg.innerHTML = `Enviado! <a class="file-link" href="${data.publicUrl}" target="_blank" rel="noopener">Abrir arquivo</a>`;
+      await adicionarHist(file.name, file.type.startsWith('image/') ? 'foto' : 'arq', data.publicUrl);
+      ok++;
+    }
+    document.getElementById('uploadStatus').textContent =
+      ok === arquivos.length ? 'Upload finalizado com sucesso.' : `${ok} de ${arquivos.length} enviados.`;
+    arquivos = []; fileInput.value = ''; uploadBtn.disabled = true;
+  };
+
+  // ── Câmera (input nativo — funciona em qualquer browser mobile) ───────────
+  let fotoBlob = null;
+
+  const camInput = document.getElementById('camInput');
+
+  camInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    fotoBlob = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('photoResult');
+      img.src = e.target.result;
+      document.getElementById('photoWrap').style.display = 'block';
+      document.getElementById('btnNovaFoto').style.display = 'inline-flex';
+      document.getElementById('btnEnviarFoto').style.display = 'inline-flex';
+      document.getElementById('camStatus').textContent = 'Foto selecionada. Confira e envie.';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  window.novaFoto = function() {
+    fotoBlob = null;
+    document.getElementById('photoWrap').style.display = 'none';
+    document.getElementById('btnNovaFoto').style.display = 'none';
+    document.getElementById('btnEnviarFoto').style.display = 'none';
+    document.getElementById('camStatus').textContent = '';
+    camInput.value = '';
+  };
+
+  window.enviarFoto = async function() {
+    if (!fotoBlob) return;
+    const status = document.getElementById('camStatus');
+    const btn    = document.getElementById('btnEnviarFoto');
+    btn.disabled = true;
+    status.textContent = 'Enviando foto...';
+    const ext  = fotoBlob.type === 'image/png' ? 'png' : 'jpg';
+    const nome = `${Date.now()}-foto-documento.${ext}`;
+    const { error } = await sb.storage.from(BUCKET).upload(nome, fotoBlob, { contentType: fotoBlob.type });
+    if (error) { status.textContent = `Erro: ${error.message}`; btn.disabled = false; return; }
+    const { data } = sb.storage.from(BUCKET).getPublicUrl(nome);
+    status.innerHTML = `Enviado! <a class="file-link" href="${data.publicUrl}" target="_blank" rel="noopener">Abrir foto</a>`;
+    await adicionarHist('foto-documento.' + ext, 'foto', data.publicUrl);
+    btn.disabled = false;
+  };
+
+  // ── Editor de texto ───────────────────────────────────────────────────────
+  window.fmt = function(cmd, val) {
+    document.execCommand(cmd, false, val || null);
+    document.getElementById('editor').focus();
+  };
+
+  window.limparEditor = function() {
+    if (confirm('Apagar o conteúdo do editor?'))
+      document.getElementById('editor').innerHTML = '';
+  };
+
+  window.salvarTexto = async function() {
+    const editor    = document.getElementById('editor');
+    const nomeInput = document.getElementById('nomeArquivoTxt');
+    const status    = document.getElementById('textoStatus');
+    if (!editor.innerText.trim()) { status.textContent = 'Escreva algo antes de salvar.'; return; }
+    const nomeBase = (nomeInput.value.trim() || 'anotacao')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9_-]/g,'-').toLowerCase();
+    const nomeArq = `${Date.now()}-${nomeBase}.html`;
+    status.textContent = 'Salvando...';
+    const blob = new Blob([editor.innerHTML], { type: 'text/html;charset=utf-8' });
+    const { error } = await sb.storage.from(BUCKET).upload(nomeArq, blob, { contentType: 'text/html;charset=utf-8' });
+    if (error) { status.textContent = `Erro: ${error.message}`; return; }
+    const { data } = sb.storage.from(BUCKET).getPublicUrl(nomeArq);
+    status.innerHTML = `Salvo! <a class="file-link" href="${data.publicUrl}" target="_blank" rel="noopener">Ver arquivo</a>`;
+    await adicionarHist(nomeBase + '.html', 'txt', data.publicUrl);
+  };
+</script>
+</body>
+</html>
