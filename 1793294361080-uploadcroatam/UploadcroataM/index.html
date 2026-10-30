@@ -236,7 +236,26 @@
     .recado-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .recado-top b { color: var(--accent-strong); }
     .recado-texto { white-space: pre-wrap; word-break: break-word; font-size: 0.92rem; line-height: 1.5; }
-    .recado-acoes { display: flex; gap: 4px; flex-shrink: 0; }
+    .recado-acoes { display: flex; gap: 4px; flex-wrap: wrap; }
+    .recado { padding: 0; overflow: hidden; }
+    .recado-cab { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer; user-select: none; }
+    .recado-cab:hover { background: rgba(127,127,127,0.06); }
+    .recado-cab-info { flex: 1; min-width: 0; }
+    .recado-titulo { font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .recado-titulo.sem { font-weight: 500; }
+    .recado-meta { font-size: 0.73rem; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .recado-meta b { color: var(--accent-strong); }
+    .recado-seta { flex-shrink: 0; color: var(--muted); transition: transform 160ms; margin-top: 3px; }
+    .recado.aberto .recado-seta { transform: rotate(180deg); }
+    .recado-detalhe { display: none; padding: 0 14px 12px; border-top: 1px dashed var(--line); }
+    .recado.aberto .recado-detalhe { display: block; }
+    .recado-detalhe .recado-acoes { margin: 8px 0 6px -8px; }
+    .titulo-linha { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .titulo-linha input { flex: 1 1 220px; height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; font: 0.88rem system-ui; background: var(--field); }
+    .chip-titulo { background: var(--soft); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font: 0.75rem system-ui; color: var(--text); cursor: pointer; }
+    .chip-titulo:hover { border-color: var(--accent); }
+    .recados-ctl { display: flex; justify-content: flex-end; gap: 4px; margin-top: 14px; }
+    .recado-edit input { width: 100%; height: 36px; margin: 8px 0 6px; border: 1px solid var(--accent); border-radius: 8px; padding: 0 12px; font: 0.88rem system-ui; background: var(--field); }
     .recado-acoes button { background: none; border: 1px solid transparent; border-radius: 6px; padding: 2px 8px; font: 0.75rem system-ui; color: var(--muted); cursor: pointer; }
     .recado-acoes button:hover { border-color: var(--line); color: var(--text); background: var(--bg); }
     .recado-acoes button.apagar:hover { color: var(--danger); border-color: var(--danger); }
@@ -436,6 +455,13 @@
       <div class="card-body">
         <p class="card-title">Recados entre computadores</p>
         <p class="card-sub">Mensagem curta que aparece na hora em todos os computadores conectados.</p>
+        <div class="titulo-linha">
+          <input id="recadoTitulo" maxlength="80" placeholder="Título (opcional) — ex.: Leia-me, Importante" />
+          <button type="button" class="chip-titulo" onclick="usarTitulo('📖 Leia-me')">📖 Leia-me</button>
+          <button type="button" class="chip-titulo" onclick="usarTitulo('⚠️ Importante')">⚠️ Importante</button>
+          <button type="button" class="chip-titulo" onclick="usarTitulo('📢 Aviso')">📢 Aviso</button>
+          <button type="button" class="chip-titulo" onclick="usarTitulo('📅 Escala')">📅 Escala</button>
+        </div>
         <div class="recado-form">
           <textarea id="recadoTexto" maxlength="10000" placeholder="Ex.: Arquivo da escala já está no Histórico. (Para mandar imagem: cole com Ctrl+V, arraste aqui ou use o botão 📎)" oninput="contarRecado()"></textarea>
         </div>
@@ -451,7 +477,11 @@
           <span class="recado-contador" id="recadoContador">0 / 10.000</span>
         </div>
         <p class="status-text" id="recadoStatus"></p>
-        <div class="recado-list" id="recadoLista"><p class="hist-loading">Carregando...</p></div>
+        <div class="recados-ctl">
+          <button class="clear-btn" onclick="abrirTodosRecados(true)">▾ Abrir todos</button>
+          <button class="clear-btn" onclick="abrirTodosRecados(false)">▴ Fechar todos</button>
+        </div>
+        <div class="recado-list" id="recadoLista" style="margin-top:6px"><p class="hist-loading">Carregando...</p></div>
       </div>
     </div>
   </div>
@@ -647,7 +677,7 @@
     const meu = nomeComputador();
     const limiteAviso = new Date(Date.now() - (DIAS_GUARDAR - DIAS_AVISO) * DIA_MS).toISOString();
     const [rec, arq, recVelhos, arqVelhos] = await Promise.all([
-      sb.from(RECADOS_TABLE).select('id,texto,computador,criado_em').gt('criado_em', visto.recados).order('criado_em', { ascending: false }).limit(30),
+      sb.from(RECADOS_TABLE).select('*').gt('criado_em', visto.recados).order('criado_em', { ascending: false }).limit(30),
       sb.from(HIST_TABLE).select('id,nome,tipo,computador,criado_em').gt('criado_em', visto.arquivos).order('criado_em', { ascending: false }).limit(30),
       sb.from(RECADOS_TABLE).select('id', { count: 'exact', head: true }).lt('criado_em', limiteAviso).eq('fixado', false),
       sb.from(HIST_TABLE).select('id', { count: 'exact', head: true }).lt('criado_em', limiteAviso).eq('fixado', false),
@@ -655,7 +685,7 @@
     const itens = [
       ...(rec.data || []).filter(x => x.computador !== meu).map(x => ({
         icone: '💬', aba: 'recados', quando: x.criado_em,
-        texto: `<b>${escHtml(x.computador || 'Outro computador')}</b>: ${escHtml((x.texto || '📷 imagem').slice(0, 80))}` })),
+        texto: `<b>${escHtml(x.computador || 'Outro computador')}</b>: ${escHtml((x.titulo || x.texto || '📷 imagem').slice(0, 80))}` })),
       ...(arq.data || []).filter(x => x.computador !== meu).map(x => ({
         icone: x.tipo === 'foto' ? '📷' : x.tipo === 'txt' ? '📝' : '📄', aba: 'historico', quando: x.criado_em,
         texto: `<b>${escHtml(x.computador || 'Outro computador')}</b> enviou ${escHtml(x.nome)}` })),
@@ -805,8 +835,8 @@
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: RECADOS_TABLE }, (p) => {
         if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador()) {
-          aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${(p.new.texto || '📷 imagem').slice(0, 80)}`);
-          avisoWindows(`💬 Recado de ${p.new.computador || 'outro computador'}`, (p.new.texto || '📷 imagem').slice(0, 120));
+          aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${(p.new.titulo || p.new.texto || '📷 imagem').slice(0, 80)}`);
+          avisoWindows(`💬 Recado de ${p.new.computador || 'outro computador'}`, (p.new.titulo || p.new.texto || '📷 imagem').slice(0, 120));
           if (!abaAtiva('recados')) document.getElementById('dotRecados').classList.add('show');
         }
         atualizarSino();
@@ -828,19 +858,28 @@
     data.sort((a, b) => (b.fixado ? 1 : 0) - (a.fixado ? 1 : 0)); // fixados no topo
     el.innerHTML = data.map(r => {
       const novo = ehNovo(r, 'recados');
+      const titulo = r.titulo
+        ? `<div class="recado-titulo">${escHtml(r.titulo)}</div>`
+        : `<div class="recado-titulo sem">${escHtml((r.texto || '📷 Imagem').split('\n')[0].slice(0, 90))}</div>`;
       return `
-      <div class="recado${r.computador === meu ? ' meu' : ''}${novo ? ' novo' : ''}${r.fixado ? ' fixado' : ''}" id="recado-${r.id}">
-        <div class="recado-top">
-          <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b>${r.fixado ? '<span class="tag-fixado">📌 FIXADO</span>' : ''}${novo ? '<span class="tag-novo">NOVO</span>' : ''}<br>📅 ${dataPostagem(r.criado_em)} · ${etiquetaPrazo(r)}</span>
+      <div class="recado${r.computador === meu ? ' meu' : ''}${novo ? ' novo' : ''}${r.fixado ? ' fixado' : ''}${recadosAbertos.has(r.id) ? ' aberto' : ''}" id="recado-${r.id}">
+        <div class="recado-cab" onclick="alternarRecado(${r.id})" title="Clique para abrir ou fechar">
+          <div class="recado-cab-info">
+            ${titulo}
+            <div class="recado-meta"><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b>${r.fixado ? '<span class="tag-fixado">📌 FIXADO</span>' : ''}${novo ? '<span class="tag-novo">NOVO</span>' : ''}${r.imagem ? ' · 📷' : ''}<br>📅 ${dataPostagem(r.criado_em)} · ${etiquetaPrazo(r)}</div>
+          </div>
+          <svg class="recado-seta" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="recado-detalhe">
           <span class="recado-acoes">
             <button title="${r.fixado ? 'Desafixar' : 'Fixar no topo (não é apagado depois de 30 dias)'}" onclick="fixarRecado(${r.id})">📌 ${r.fixado ? 'Desafixar' : 'Fixar'}</button>
             <button title="Copiar o texto do recado" onclick="copiarRecado(${r.id}, this)">📋 Copiar</button>
             <button title="Editar o texto do recado" onclick="editarRecado(${r.id})">✏️ Editar</button>
             <button class="apagar" title="Apagar recado" onclick="apagarRecado(${r.id})">🗑️ Apagar</button>
           </span>
+          <div class="recado-corpo">${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}</div>
+          ${r.imagem ? `<img class="recado-img" src="${escHtml(r.imagem)}" alt="Imagem do recado" loading="lazy" onclick="abrirZoom(this.src)" />` : ''}
         </div>
-        <div class="recado-corpo">${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}</div>
-        ${r.imagem ? `<img class="recado-img" src="${escHtml(r.imagem)}" alt="Imagem do recado" loading="lazy" onclick="abrirZoom(this.src)" />` : ''}
       </div>`;
     }).join('');
   }
@@ -850,10 +889,34 @@
   let recadosAtuais = {};
   let editandoRecado = null; // enquanto edita, a lista não recarrega sozinha
 
+  const recadosAbertos = new Set(); // quais estão abertos (mantém ao recarregar a lista)
+
+  window.alternarRecado = function(id) {
+    const el = document.getElementById('recado-' + id);
+    if (!el) return;
+    const abrir = !el.classList.contains('aberto');
+    el.classList.toggle('aberto', abrir);
+    if (abrir) recadosAbertos.add(id); else recadosAbertos.delete(id);
+  };
+
+  window.abrirTodosRecados = function(abrir) {
+    document.querySelectorAll('#recadoLista .recado').forEach(el => {
+      const id = Number(el.id.replace('recado-', ''));
+      el.classList.toggle('aberto', abrir);
+      if (abrir) recadosAbertos.add(id); else recadosAbertos.delete(id);
+    });
+  };
+
+  window.usarTitulo = function(t) {
+    const campo = document.getElementById('recadoTitulo');
+    campo.value = t;
+    document.getElementById('recadoTexto').focus();
+  };
+
   window.copiarRecado = async function(id, btn) {
     const r = recadosAtuais[id];
     if (!r) return;
-    const conteudo = [r.texto, r.imagem].filter(Boolean).join('\n');
+    const conteudo = [r.titulo, r.texto, r.imagem].filter(Boolean).join('\n');
     try {
       await navigator.clipboard.writeText(conteudo);
       btn.textContent = '✔ Copiado';
@@ -868,14 +931,17 @@
     if (!r || !corpo) return;
     if (editandoRecado && editandoRecado !== id) cancelarEdicaoRecado();
     editandoRecado = id;
+    recadosAbertos.add(id);
     corpo.innerHTML = `
       <div class="recado-edit">
+        <input maxlength="80" placeholder="Título (opcional)" />
         <textarea maxlength="10000"></textarea>
         <div class="actions">
           <button class="btn btn-primary btn-sm" onclick="salvarEdicaoRecado(${id})">Salvar</button>
           <button class="btn btn-outline btn-sm" onclick="cancelarEdicaoRecado()">Cancelar</button>
         </div>
       </div>`;
+    corpo.querySelector('input').value = r.titulo || '';
     const campo = corpo.querySelector('textarea');
     campo.value = r.texto || '';
     campo.focus();
@@ -900,10 +966,11 @@
   window.salvarEdicaoRecado = async function(id) {
     const r = recadosAtuais[id];
     const texto = document.querySelector(`#recado-${id} .recado-edit textarea`).value.trim();
+    const titulo = document.querySelector(`#recado-${id} .recado-edit input`).value.trim() || null;
     if (!texto && !r.imagem) { alert('O recado não pode ficar vazio. Para tirar ele, use Apagar.'); return; }
     // .select() confirma que o banco gravou de verdade (RLS bloqueando = 0 linhas)
-    const { data, error } = await sb.from(RECADOS_TABLE).update({ texto }).eq('id', id).select();
-    if (error || !data || !data.length) { alert('Não foi possível salvar a edição. Tente novamente.'); return; }
+    const { data, error } = await sb.from(RECADOS_TABLE).update({ texto, titulo }).eq('id', id).select();
+    if (error || !data || !data.length) { alert('Não foi possível salvar a edição. Confira se o script 08 (título dos recados) foi rodado no Supabase.'); return; }
     editandoRecado = null;
     renderRecados();
   };
@@ -989,9 +1056,13 @@
       try { imagem = await enviarImagem(recadoImg, 'recado'); }
       catch (err) { status.textContent = `Erro ao enviar a imagem: ${err.message}`; return; }
     }
-    const { error } = await sb.from(RECADOS_TABLE).insert({ texto, imagem, computador: nomeComputador() });
+    const novo = { texto, imagem, computador: nomeComputador() };
+    const titulo = document.getElementById('recadoTitulo').value.trim();
+    if (titulo) novo.titulo = titulo;
+    const { error } = await sb.from(RECADOS_TABLE).insert(novo);
     if (error) { status.textContent = `Erro: ${error.message}`; return; }
     campo.value = '';
+    document.getElementById('recadoTitulo').value = '';
     removerAnexoRecado();
     contarRecado();
     status.textContent = 'Recado enviado.';
