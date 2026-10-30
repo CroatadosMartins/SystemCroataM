@@ -236,6 +236,13 @@
     .recado-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .recado-top b { color: var(--accent-strong); }
     .recado-texto { white-space: pre-wrap; word-break: break-word; font-size: 0.92rem; line-height: 1.5; }
+    .recado-acoes { display: flex; gap: 4px; flex-shrink: 0; }
+    .recado-acoes button { background: none; border: 1px solid transparent; border-radius: 6px; padding: 2px 8px; font: 0.75rem system-ui; color: var(--muted); cursor: pointer; }
+    .recado-acoes button:hover { border-color: var(--line); color: var(--text); background: var(--bg); }
+    .recado-acoes button.apagar:hover { color: var(--danger); border-color: var(--danger); }
+    .recado-acoes button.ok { color: var(--success); }
+    .recado-edit textarea { width: 100%; min-height: 90px; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; font: 0.9rem system-ui; resize: vertical; background: var(--field); }
+    .recado-edit .actions { margin-top: 8px; }
     .recado-img { display: block; max-width: 220px; max-height: 160px; margin-top: 8px; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; object-fit: cover; }
     .recado-anexo { display: none; align-items: center; gap: 10px; margin-top: 10px; padding: 8px; border: 1px dashed var(--dash); border-radius: 8px; background: var(--soft); font-size: 0.8rem; color: var(--muted); }
     .recado-anexo.show { display: flex; }
@@ -564,7 +571,7 @@
           aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${(p.new.texto || '📷 imagem').slice(0, 80)}`);
           if (!abaAtiva('recados')) document.getElementById('dotRecados').classList.add('show');
         }
-        if (abaAtiva('recados')) renderRecados();
+        if (abaAtiva('recados') && !editandoRecado) renderRecados();
       })
       .subscribe();
   }
@@ -575,19 +582,76 @@
     const { data, error } = await sb.from(RECADOS_TABLE)
       .select('*').order('criado_em', { ascending: false }).limit(100);
     if (error) { el.innerHTML = '<p class="hist-empty">Não foi possível carregar os recados.</p>'; return; }
+    recadosAtuais = {};
+    data.forEach(r => { recadosAtuais[r.id] = r; });
     if (!data.length) { el.innerHTML = '<p class="hist-empty">Nenhum recado ainda.</p>'; return; }
     const meu = nomeComputador();
     el.innerHTML = data.map(r => `
-      <div class="recado${r.computador === meu ? ' meu' : ''}">
+      <div class="recado${r.computador === meu ? ' meu' : ''}" id="recado-${r.id}">
         <div class="recado-top">
           <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b> · ${new Date(r.criado_em).toLocaleString('pt-BR')}</span>
-          <button class="clear-btn" title="Apagar recado" onclick="apagarRecado(${r.id})">Apagar</button>
+          <span class="recado-acoes">
+            <button title="Copiar o texto do recado" onclick="copiarRecado(${r.id}, this)">📋 Copiar</button>
+            <button title="Editar o texto do recado" onclick="editarRecado(${r.id})">✏️ Editar</button>
+            <button class="apagar" title="Apagar recado" onclick="apagarRecado(${r.id})">🗑️ Apagar</button>
+          </span>
         </div>
-        ${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}
+        <div class="recado-corpo">${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}</div>
         ${r.imagem ? `<img class="recado-img" src="${escHtml(r.imagem)}" alt="Imagem do recado" loading="lazy" onclick="abrirZoom(this.src)" />` : ''}
       </div>`).join('');
   }
   window.renderRecados = renderRecados;
+
+  // ── Copiar / editar recado ────────────────────────────────────────────────
+  let recadosAtuais = {};
+  let editandoRecado = null; // enquanto edita, a lista não recarrega sozinha
+
+  window.copiarRecado = async function(id, btn) {
+    const r = recadosAtuais[id];
+    if (!r) return;
+    const conteudo = [r.texto, r.imagem].filter(Boolean).join('\n');
+    try {
+      await navigator.clipboard.writeText(conteudo);
+      btn.textContent = '✔ Copiado';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = '📋 Copiar'; btn.classList.remove('ok'); }, 1500);
+    } catch { alert('Não foi possível copiar. Selecione o texto e use Ctrl+C.'); }
+  };
+
+  window.editarRecado = function(id) {
+    const r = recadosAtuais[id];
+    const corpo = document.querySelector(`#recado-${id} .recado-corpo`);
+    if (!r || !corpo) return;
+    if (editandoRecado && editandoRecado !== id) cancelarEdicaoRecado();
+    editandoRecado = id;
+    corpo.innerHTML = `
+      <div class="recado-edit">
+        <textarea maxlength="10000"></textarea>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" onclick="salvarEdicaoRecado(${id})">Salvar</button>
+          <button class="btn btn-outline btn-sm" onclick="cancelarEdicaoRecado()">Cancelar</button>
+        </div>
+      </div>`;
+    const campo = corpo.querySelector('textarea');
+    campo.value = r.texto || '';
+    campo.focus();
+  };
+
+  window.cancelarEdicaoRecado = function() {
+    editandoRecado = null;
+    renderRecados();
+  };
+
+  window.salvarEdicaoRecado = async function(id) {
+    const r = recadosAtuais[id];
+    const texto = document.querySelector(`#recado-${id} .recado-edit textarea`).value.trim();
+    if (!texto && !r.imagem) { alert('O recado não pode ficar vazio. Para tirar ele, use Apagar.'); return; }
+    // .select() confirma que o banco gravou de verdade (RLS bloqueando = 0 linhas)
+    const { data, error } = await sb.from(RECADOS_TABLE).update({ texto }).eq('id', id).select();
+    if (error || !data || !data.length) { alert('Não foi possível salvar a edição. Tente novamente.'); return; }
+    editandoRecado = null;
+    renderRecados();
+  };
 
   window.contarRecado = function() {
     const n = document.getElementById('recadoTexto').value.length;
