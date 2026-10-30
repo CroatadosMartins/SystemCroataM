@@ -228,7 +228,7 @@
     .login-tema { margin-top: 14px; }
     .hist-pc { font-size: 0.72rem; color: var(--accent-strong); font-weight: 600; }
     .recado-form { display: flex; gap: 8px; }
-    .recado-form textarea { flex: 1; min-height: 70px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 0.9rem system-ui; resize: vertical; }
+    .recado-form textarea { flex: 1; min-height: 70px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 0.9rem system-ui; resize: vertical; }
     .recado-contador { align-self: center; margin-left: auto; font-size: 0.75rem; color: var(--muted); }
     .recado-list { display: grid; gap: 10px; margin-top: 16px; }
     .recado { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--field); }
@@ -249,6 +249,41 @@
     .recado-anexo img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; }
     .recado-form.drag textarea { border-color: var(--accent); background: var(--accent-light); }
     .editor-area img { max-width: 100%; max-height: 420px; width: auto; height: auto; border-radius: 8px; cursor: zoom-in; }
+    /* NOVIDADES / FIXADOS / PRAZO */
+    .recado-top { flex-wrap: wrap; }
+    .recado.novo, .hist-item.novo { background: #fef9c3; border-color: #facc15; }
+    .hist-item.novo { border-radius: 8px; padding: 10px; margin: 0 -10px; border-bottom-color: transparent; }
+    .recado.fixado { border-left: 4px solid var(--accent); }
+    .hist-item.fixado { border-left: 3px solid var(--accent); padding-left: 10px; }
+    .copy-btn.pin-on { background: var(--accent-light); color: var(--accent-strong); border-color: var(--accent); }
+    .tag-novo { display: inline-block; background: #facc15; color: #422006; font: 700 0.62rem system-ui; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+    .tag-fixado { display: inline-block; background: var(--accent-light); color: var(--accent-strong); font: 700 0.62rem system-ui; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+    .prazo { white-space: nowrap; }
+    .prazo.perto { color: #c2410c; font-weight: 700; }
+    .prazo.fixo { color: var(--accent-strong); }
+    .grupo-novos { font-size: 0.75rem; font-weight: 700; color: #a16207; margin-left: 6px; }
+    :root[data-theme="dark"] .recado.novo, :root[data-theme="dark"] .hist-item.novo { background: #422006; border-color: #a16207; }
+    :root[data-theme="dark"] .prazo.perto { color: #fb923c; }
+    :root[data-theme="dark"] .grupo-novos { color: #facc15; }
+
+    /* SININHO */
+    .sino-btn { position: relative; align-self: center; margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 8px; height: 32px; width: 40px; padding: 0; font-size: 1rem; cursor: pointer; flex-shrink: 0; }
+    .sino-btn:hover { background: var(--bg); }
+    .sino-btn + .pc-chip { margin-left: 8px; }
+    .sino-badge { display: none; position: absolute; top: 1px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font: 700 0.62rem/16px system-ui; }
+    .sino-badge.show { display: inline-block; }
+    .sino-painel { display: none; position: fixed; top: 54px; right: 16px; width: min(380px, calc(100% - 32px)); max-height: 75vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.2); z-index: 130; }
+    .sino-painel.show { display: block; }
+    .sino-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+    .sino-item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 0.82rem; line-height: 1.4; }
+    .sino-item:hover { background: var(--bg); }
+    .sino-item.alerta { background: #fff7ed; }
+    :root[data-theme="dark"] .sino-item.alerta { background: #431407; }
+    .sino-quando { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .sino-vazio { padding: 20px 14px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    .sino-rodape { padding: 10px 14px; font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+    .sino-rodape button { margin-top: 8px; }
+
     .zoom-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
     .zoom-overlay.show { display: flex; }
     .zoom-overlay img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -304,6 +339,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     Histórico
   </button>
+  <button class="sino-btn" id="sinoBtn" title="Notificações" onclick="alternarSino(event)">🔔<span class="sino-badge" id="sinoBadge"></span></button>
   <button class="pc-chip" id="pcChip" title="Trocar o nome deste computador" onclick="definirComputador(true)">🖥️ —</button>
   <button class="tema-btn" title="Trocar entre modo claro e escuro" onclick="trocarTema()"></button>
   <button class="logout-btn" onclick="sairApp()">Sair</button>
@@ -450,6 +486,18 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="sino-painel" id="sinoPainel">
+  <div class="sino-topo">
+    <b>🔔 Notificações</b>
+    <button class="clear-btn" onclick="marcarTudoLido()">Marcar tudo como lido</button>
+  </div>
+  <div id="sinoLista"><p class="sino-vazio">Carregando...</p></div>
+  <div class="sino-rodape">
+    🧹 Recados e arquivos com <b>mais de 30 dias</b> são apagados automaticamente, para o sistema não lotar. Recados e arquivos 📌 fixados não são apagados.
+    <br><button class="btn btn-outline btn-sm" id="btnAvisoWindows" onclick="ativarAvisosWindows()">🖥️ Ativar avisos do Windows</button>
+  </div>
+</div>
+
 <div class="zoom-overlay" id="zoomOverlay" onclick="fecharZoom()"><img id="zoomImg" alt="" /></div>
 
 <div class="scroll-nav" id="scrollNav">
@@ -510,6 +558,9 @@
       definirComputador(false);
       iniciarTempoReal();
       renderRecados(); // Recados é a aba que abre primeiro
+      atualizarSino();
+      setInterval(atualizarSino, 5 * 60 * 1000);
+      setTimeout(limpezaAutomatica, 3000);
     }
   }
 
@@ -546,6 +597,189 @@
   };
   rotularTema();
 
+  // ── Novidades, prazo de 30 dias e sininho ─────────────────────────────────
+  const DIAS_GUARDAR = 30; // recados e arquivos são apagados depois disso (fixados ficam)
+  const DIAS_AVISO   = 3;  // o sininho avisa quando faltar isso ou menos
+  const DIA_MS = 86400000;
+
+  // "visto" = última vez que ESTE computador olhou cada aba (fica no navegador)
+  function lerVisto(chave) {
+    try {
+      let v = localStorage.getItem('croatam_visto_' + chave);
+      if (!v) { v = new Date().toISOString(); localStorage.setItem('croatam_visto_' + chave, v); }
+      return v;
+    } catch { return new Date().toISOString(); }
+  }
+  const visto = { recados: lerVisto('recados'), arquivos: lerVisto('arquivos') };
+
+  function marcarVisto(chave) {
+    visto[chave] = new Date().toISOString();
+    try { localStorage.setItem('croatam_visto_' + chave, visto[chave]); } catch {}
+  }
+
+  // novo = veio de OUTRO computador depois da última vez que este viu a aba
+  function ehNovo(item, chave) {
+    return item.computador !== nomeComputador() && new Date(item.criado_em) > new Date(visto[chave]);
+  }
+
+  function diasRestantes(criado_em) {
+    return Math.ceil((new Date(criado_em).getTime() + DIAS_GUARDAR * DIA_MS - Date.now()) / DIA_MS);
+  }
+
+  function etiquetaPrazo(item) {
+    if (item.fixado) return '<span class="prazo fixo">📌 não é apagado</span>';
+    const d = diasRestantes(item.criado_em);
+    const txt = d <= 0 ? 'apaga hoje' : d === 1 ? 'apaga amanhã' : `apaga em ${d} dias`;
+    return `<span class="prazo${d <= DIAS_AVISO ? ' perto' : ''}" title="Itens com mais de ${DIAS_GUARDAR} dias são apagados automaticamente">⏳ ${txt}</span>`;
+  }
+
+  function dataPostagem(iso) {
+    const d = new Date(iso);
+    return `Postado em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  function irPara(aba) {
+    const btn = document.querySelector(`nav button[onclick="showTab('${aba}',this)"]`);
+    if (btn) showTab(aba, btn);
+  }
+
+  async function atualizarSino() {
+    const meu = nomeComputador();
+    const limiteAviso = new Date(Date.now() - (DIAS_GUARDAR - DIAS_AVISO) * DIA_MS).toISOString();
+    const [rec, arq, recVelhos, arqVelhos] = await Promise.all([
+      sb.from(RECADOS_TABLE).select('id,texto,computador,criado_em').gt('criado_em', visto.recados).order('criado_em', { ascending: false }).limit(30),
+      sb.from(HIST_TABLE).select('id,nome,tipo,computador,criado_em').gt('criado_em', visto.arquivos).order('criado_em', { ascending: false }).limit(30),
+      sb.from(RECADOS_TABLE).select('id', { count: 'exact', head: true }).lt('criado_em', limiteAviso).eq('fixado', false),
+      sb.from(HIST_TABLE).select('id', { count: 'exact', head: true }).lt('criado_em', limiteAviso).eq('fixado', false),
+    ]);
+    const itens = [
+      ...(rec.data || []).filter(x => x.computador !== meu).map(x => ({
+        icone: '💬', aba: 'recados', quando: x.criado_em,
+        texto: `<b>${escHtml(x.computador || 'Outro computador')}</b>: ${escHtml((x.texto || '📷 imagem').slice(0, 80))}` })),
+      ...(arq.data || []).filter(x => x.computador !== meu).map(x => ({
+        icone: x.tipo === 'foto' ? '📷' : x.tipo === 'txt' ? '📝' : '📄', aba: 'historico', quando: x.criado_em,
+        texto: `<b>${escHtml(x.computador || 'Outro computador')}</b> enviou ${escHtml(x.nome)}` })),
+    ].sort((a, b) => new Date(b.quando) - new Date(a.quando));
+
+    const vencendo = (recVelhos.count || 0) + (arqVelhos.count || 0);
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    let avisoVistoHoje = false;
+    try { avisoVistoHoje = localStorage.getItem('croatam_aviso_dia') === hoje; } catch {}
+    if (vencendo) {
+      itens.unshift({
+        icone: '⚠️', alerta: true, aba: arqVelhos.count ? 'historico' : 'recados',
+        texto: `<b>${vencendo} ${vencendo === 1 ? 'item será apagado' : 'itens serão apagados'}</b> em até ${DIAS_AVISO} dias (completam ${DIAS_GUARDAR} dias no sistema). Baixe ou fixe 📌 o que for importante. Eles aparecem com ⏳ em laranja.` });
+    }
+
+    const total = itens.length - (vencendo && avisoVistoHoje ? 1 : 0);
+    const badge = document.getElementById('sinoBadge');
+    badge.textContent = total > 9 ? '9+' : total;
+    badge.classList.toggle('show', total > 0);
+
+    sinoItens = itens;
+    document.getElementById('sinoLista').innerHTML = itens.length
+      ? itens.map((it, i) => `
+        <div class="sino-item${it.alerta ? ' alerta' : ''}" onclick="abrirItemSino(${i})">
+          <span>${it.icone}</span>
+          <span>${it.texto}${it.quando ? `<span class="sino-quando">${dataPostagem(it.quando)}</span>` : ''}</span>
+        </div>`).join('')
+      : '<p class="sino-vazio">Nenhuma novidade. Tudo em dia! ✅</p>';
+  }
+  let sinoItens = [];
+  window.atualizarSino = atualizarSino;
+
+  window.alternarSino = function(ev) {
+    ev.stopPropagation();
+    const painel = document.getElementById('sinoPainel');
+    const abrir = !painel.classList.contains('show');
+    painel.classList.toggle('show', abrir);
+    if (abrir) {
+      // abrir o sininho conta como "vi o aviso de exclusão de hoje"
+      try { localStorage.setItem('croatam_aviso_dia', new Date().toLocaleDateString('pt-BR')); } catch {}
+      atualizarSino();
+      rotularAvisosWindows();
+    }
+  };
+
+  function fecharSino() { document.getElementById('sinoPainel').classList.remove('show'); }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#sinoPainel') && !e.target.closest('#sinoBtn')) fecharSino();
+  });
+
+  window.abrirItemSino = function(i) {
+    const it = sinoItens[i];
+    fecharSino();
+    if (it) irPara(it.aba);
+  };
+
+  window.marcarTudoLido = function() {
+    const novosRec = document.querySelectorAll('.recado.novo').length;
+    marcarVisto('recados');
+    marcarVisto('arquivos');
+    try { localStorage.setItem('croatam_aviso_dia', new Date().toLocaleDateString('pt-BR')); } catch {}
+    atualizarSino();
+    if (abaAtiva('recados') && novosRec) renderRecados();
+    if (abaAtiva('historico')) renderHist();
+  };
+
+  // ── Avisos do Windows (aparecem mesmo com o navegador minimizado) ─────────
+  function rotularAvisosWindows() {
+    const b = document.getElementById('btnAvisoWindows');
+    if (!('Notification' in window)) { b.style.display = 'none'; return; }
+    b.textContent = Notification.permission === 'granted' ? '✅ Avisos do Windows ativados'
+      : Notification.permission === 'denied' ? '🚫 Avisos do Windows bloqueados no navegador'
+      : '🖥️ Ativar avisos do Windows';
+    b.disabled = Notification.permission !== 'default';
+  }
+  window.ativarAvisosWindows = async function() {
+    try { await Notification.requestPermission(); } catch {}
+    rotularAvisosWindows();
+  };
+  function avisoWindows(titulo, corpo) {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return;
+    try { new Notification(titulo, { body: corpo, icon: '/icons/icon-192.png' }); } catch {}
+  }
+
+  // ── Limpeza automática: tudo com mais de 30 dias (menos o que está fixado) ──
+  // Roda uma vez por dia, no primeiro computador que abrir o sistema.
+  async function limpezaAutomatica() {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    try { if (localStorage.getItem('croatam_limpeza') === hoje) return; } catch {}
+    const limiteMs = Date.now() - DIAS_GUARDAR * DIA_MS;
+    const [rec, arq] = await Promise.all([
+      sb.from(RECADOS_TABLE).select('id,imagem,fixado,criado_em').limit(5000),
+      sb.from(HIST_TABLE).select('id,url,fixado,criado_em').limit(5000),
+    ]);
+    // Sem a coluna "fixado" (scripts 06/07 ainda não rodaram) ou sem conexão: não apaga nada.
+    if (rec.error || arq.error) return;
+    const velho = item => new Date(item.criado_em).getTime() < limiteMs;
+    const recApagar = rec.data.filter(x => velho(x) && !x.fixado);
+    const arqApagar = arq.data.filter(x => velho(x) && !x.fixado);
+
+    // arquivos que continuam em uso não podem sair do armazenamento
+    const manter = new Set();
+    rec.data.filter(x => !recApagar.includes(x)).forEach(x => { const p = pathFromUrl(x.imagem); if (p) manter.add(p); });
+    arq.data.filter(x => !arqApagar.includes(x)).forEach(x => { const p = pathFromUrl(x.url); if (p) manter.add(p); });
+    let storage = [];
+    try { storage = await listarTodosArquivosStorage(); } catch { return; }
+    const paths = storage
+      .filter(f => f.created_at && new Date(f.created_at).getTime() < limiteMs && !manter.has(f.name))
+      .map(f => f.name);
+
+    if (recApagar.length) await sb.from(RECADOS_TABLE).delete().in('id', recApagar.map(x => x.id));
+    if (arqApagar.length) await sb.from(HIST_TABLE).delete().in('id', arqApagar.map(x => x.id));
+    for (let i = 0; i < paths.length; i += 100) {
+      try { await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100)); } catch {}
+    }
+    try { localStorage.setItem('croatam_limpeza', hoje); } catch {}
+    const total = recApagar.length + arqApagar.length;
+    if (total) {
+      aviso(`🧹 Limpeza automática: ${total} ${total === 1 ? 'item com mais de 30 dias foi apagado' : 'itens com mais de 30 dias foram apagados'}.`);
+      if (abaAtiva('recados')) renderRecados();
+      if (abaAtiva('historico')) { renderHist(); renderStorageStatus(); }
+    }
+  }
+
   // ── Tempo real: avisa quando outro computador envia algo ──────────────────
   function aviso(texto) {
     const t = document.getElementById('toast');
@@ -562,15 +796,20 @@
   function iniciarTempoReal() {
     sb.channel('croatam')
       .on('postgres_changes', { event: '*', schema: 'public', table: HIST_TABLE }, (p) => {
-        if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador())
+        if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador()) {
           aviso(`📥 ${p.new.computador || 'Outro computador'} enviou: ${p.new.nome}`);
+          avisoWindows(`📥 ${p.new.computador || 'Outro computador'} enviou um arquivo`, p.new.nome);
+        }
+        atualizarSino();
         if (abaAtiva('historico')) { renderHist(); renderStorageStatus(); }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: RECADOS_TABLE }, (p) => {
         if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador()) {
           aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${(p.new.texto || '📷 imagem').slice(0, 80)}`);
+          avisoWindows(`💬 Recado de ${p.new.computador || 'outro computador'}`, (p.new.texto || '📷 imagem').slice(0, 120));
           if (!abaAtiva('recados')) document.getElementById('dotRecados').classList.add('show');
         }
+        atualizarSino();
         if (abaAtiva('recados') && !editandoRecado) renderRecados();
       })
       .subscribe();
@@ -586,11 +825,15 @@
     data.forEach(r => { recadosAtuais[r.id] = r; });
     if (!data.length) { el.innerHTML = '<p class="hist-empty">Nenhum recado ainda.</p>'; return; }
     const meu = nomeComputador();
-    el.innerHTML = data.map(r => `
-      <div class="recado${r.computador === meu ? ' meu' : ''}" id="recado-${r.id}">
+    data.sort((a, b) => (b.fixado ? 1 : 0) - (a.fixado ? 1 : 0)); // fixados no topo
+    el.innerHTML = data.map(r => {
+      const novo = ehNovo(r, 'recados');
+      return `
+      <div class="recado${r.computador === meu ? ' meu' : ''}${novo ? ' novo' : ''}${r.fixado ? ' fixado' : ''}" id="recado-${r.id}">
         <div class="recado-top">
-          <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b> · ${new Date(r.criado_em).toLocaleString('pt-BR')}</span>
+          <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b>${r.fixado ? '<span class="tag-fixado">📌 FIXADO</span>' : ''}${novo ? '<span class="tag-novo">NOVO</span>' : ''}<br>📅 ${dataPostagem(r.criado_em)} · ${etiquetaPrazo(r)}</span>
           <span class="recado-acoes">
+            <button title="${r.fixado ? 'Desafixar' : 'Fixar no topo (não é apagado depois de 30 dias)'}" onclick="fixarRecado(${r.id})">📌 ${r.fixado ? 'Desafixar' : 'Fixar'}</button>
             <button title="Copiar o texto do recado" onclick="copiarRecado(${r.id}, this)">📋 Copiar</button>
             <button title="Editar o texto do recado" onclick="editarRecado(${r.id})">✏️ Editar</button>
             <button class="apagar" title="Apagar recado" onclick="apagarRecado(${r.id})">🗑️ Apagar</button>
@@ -598,7 +841,8 @@
         </div>
         <div class="recado-corpo">${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}</div>
         ${r.imagem ? `<img class="recado-img" src="${escHtml(r.imagem)}" alt="Imagem do recado" loading="lazy" onclick="abrirZoom(this.src)" />` : ''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   window.renderRecados = renderRecados;
 
@@ -635,6 +879,17 @@
     const campo = corpo.querySelector('textarea');
     campo.value = r.texto || '';
     campo.focus();
+  };
+
+  window.fixarRecado = async function(id) {
+    const r = recadosAtuais[id];
+    if (!r) return;
+    const { data, error } = await sb.from(RECADOS_TABLE).update({ fixado: !r.fixado }).eq('id', id).select();
+    if (error || !data || !data.length) {
+      alert('Não foi possível fixar. Confira se o script 06 (fixar recados) foi rodado no Supabase.');
+      return;
+    }
+    renderRecados();
   };
 
   window.cancelarEdicaoRecado = function() {
@@ -867,6 +1122,7 @@
       const chave = (item.tipo === 'foto' || item.tipo === 'txt') ? item.tipo : 'arq'; // "outros" cai em Arquivos
       gruposAtuais[chave].push(item);
     });
+    Object.values(gruposAtuais).forEach(lista => lista.sort((a, b) => (b.fixado ? 1 : 0) - (a.fixado ? 1 : 0)));
 
     el.innerHTML = GRUPOS_HIST.map(grupo => {
       const doGrupo = gruposAtuais[grupo.tipo];
@@ -875,11 +1131,13 @@
         return soma + (path && tamanhos[path] ? tamanhos[path] : 0);
       }, 0);
       const estado = estadoGrupos[grupo.tipo];
+      const novos = doGrupo.filter(item => ehNovo(item, 'arquivos')).length;
+      if (novos && !estado.vistoNovo) { estado.open = true; estado.vistoNovo = true; } // abre o card que tem novidade
       return `
       <div class="card hist-group-card${estado.open ? ' open' : ''}" data-tipo="${grupo.tipo}">
         <div class="card-body">
           <button class="hist-group-top" type="button" onclick="toggleGrupoLista('${grupo.tipo}')">
-            <span class="hist-group-title">${grupo.icon} ${grupo.label}</span>
+            <span class="hist-group-title">${grupo.icon} ${grupo.label}${novos ? `<span class="grupo-novos">🟡 ${novos} novo${novos > 1 ? 's' : ''}</span>` : ''}</span>
             <svg class="hist-group-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="hist-group-search-row">
@@ -944,21 +1202,23 @@
     const data = item.criado_em
       ? new Date(item.criado_em).toLocaleString('pt-BR')
       : (item.data || '');
-    const selected = item.url === ultimoSelecionadoUrl ? ' selected' : '';
+    const novo = item.criado_em && ehNovo(item, 'arquivos');
+    const selected = (item.url === ultimoSelecionadoUrl ? ' selected' : '') + (novo ? ' novo' : '') + (item.fixado ? ' fixado' : '');
     return `
       <div class="hist-item${selected}" data-url="${escHtml(item.url)}">
         <div class="hist-item-top">
           <div class="hist-icon">${TIPO_ICONS[item.tipo] || '📄'}</div>
           <div class="hist-info">
             <div class="hist-name">
-              ${escHtml(item.nome)}
+              ${escHtml(item.nome)}${item.fixado ? '<span class="tag-fixado">📌 FIXADO</span>' : ''}${novo ? '<span class="tag-novo">NOVO</span>' : ''}
               <span class="hist-badge ${TIPO_BADGES[item.tipo] || 'badge-arq'}">${TIPO_LABELS[item.tipo] || 'Arquivo'}</span>
             </div>
-            <div class="hist-date">${data}${item.computador ? ` · <span class="hist-pc">🖥️ ${escHtml(item.computador)}</span>` : ''}</div>
+            <div class="hist-date">${item.criado_em ? '📅 ' + dataPostagem(item.criado_em) : data}${item.computador ? ` · <span class="hist-pc">🖥️ ${escHtml(item.computador)}</span>` : ''}${item.criado_em ? ' · ' + etiquetaPrazo(item) : ''}</div>
           </div>
         </div>
         <div class="hist-url">${escHtml(item.url)}</div>
         <div class="hist-acts">
+          ${item.id ? `<button class="copy-btn${item.fixado ? ' pin-on' : ''}" title="${item.fixado ? 'Desafixar' : 'Fixar (não é apagado depois de 30 dias)'}" onclick="fixarArquivo(${item.id})">📌</button>` : ''}
           <button class="copy-btn" title="Copiar link" data-url="${escHtml(item.url)}" onclick="copiarLink(this)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
@@ -988,6 +1248,18 @@
     document.querySelectorAll('.hist-item').forEach(el => {
       el.classList.toggle('selected', el.dataset.url === url);
     });
+  };
+
+  window.fixarArquivo = async function(id) {
+    const item = Object.values(gruposAtuais).flat().find(i => i.id === id);
+    if (!item) return;
+    const { data, error } = await sb.from(HIST_TABLE).update({ fixado: !item.fixado }).eq('id', id).select();
+    if (error || !data || !data.length) {
+      alert('Não foi possível fixar. Confira se o script 07 (fixar arquivos) foi rodado no Supabase.');
+      return;
+    }
+    await renderHist();
+    atualizarSino();
   };
 
   window.visualizarItem = async function(btn) {
@@ -1177,6 +1449,13 @@
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   window.showTab = function(id, btn) {
+    const anterior = document.querySelector('.tab.active')?.id;
+    if (anterior === 'tab-recados' && id !== 'recados') { marcarVisto('recados'); atualizarSino(); }
+    if (anterior === 'tab-historico' && id !== 'historico') {
+      marcarVisto('arquivos');
+      Object.values(estadoGrupos).forEach(e => { e.vistoNovo = false; });
+      atualizarSino();
+    }
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + id).classList.add('active');
