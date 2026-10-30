@@ -229,6 +229,7 @@
     .hist-pc { font-size: 0.72rem; color: var(--accent-strong); font-weight: 600; }
     .recado-form { display: flex; gap: 8px; }
     .recado-form textarea { flex: 1; min-height: 70px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 0.9rem system-ui; resize: vertical; }
+    .recado-contador { align-self: center; margin-left: auto; font-size: 0.75rem; color: var(--muted); }
     .recado-list { display: grid; gap: 10px; margin-top: 16px; }
     .recado { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--field); }
     .recado.meu { background: #f0fdfa; border-color: #99f6e4; }
@@ -384,10 +385,11 @@
         <p class="card-title">Recados entre computadores</p>
         <p class="card-sub">Mensagem curta que aparece na hora em todos os computadores conectados.</p>
         <div class="recado-form">
-          <textarea id="recadoTexto" maxlength="1000" placeholder="Ex.: Arquivo da escala já está no Histórico."></textarea>
+          <textarea id="recadoTexto" maxlength="10000" placeholder="Ex.: Arquivo da escala já está no Histórico." oninput="contarRecado()"></textarea>
         </div>
         <div class="actions">
           <button class="btn btn-primary" onclick="enviarRecado()">Enviar recado</button>
+          <span class="recado-contador" id="recadoContador">0 / 10.000</span>
         </div>
         <p class="status-text" id="recadoStatus"></p>
         <div class="recado-list" id="recadoLista"><p class="hist-loading">Carregando...</p></div>
@@ -568,6 +570,11 @@
   }
   window.renderRecados = renderRecados;
 
+  window.contarRecado = function() {
+    const n = document.getElementById('recadoTexto').value.length;
+    document.getElementById('recadoContador').textContent = `${n.toLocaleString('pt-BR')} / 10.000`;
+  };
+
   window.enviarRecado = async function() {
     const campo = document.getElementById('recadoTexto');
     const status = document.getElementById('recadoStatus');
@@ -577,6 +584,7 @@
     const { error } = await sb.from(RECADOS_TABLE).insert({ texto, computador: nomeComputador() });
     if (error) { status.textContent = `Erro: ${error.message}`; return; }
     campo.value = '';
+    contarRecado();
     status.textContent = 'Recado enviado.';
     renderRecados();
   };
