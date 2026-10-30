@@ -267,7 +267,11 @@
 <div id="appShell" style="display:none;">
 
 <nav>
-  <button class="active" onclick="showTab('upload',this)">
+  <button class="active" onclick="showTab('recados',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Recados <span class="nav-dot" id="dotRecados"></span>
+  </button>
+  <button onclick="showTab('upload',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Upload
   </button>
@@ -278,10 +282,6 @@
   <button onclick="showTab('texto',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     Texto
-  </button>
-  <button onclick="showTab('recados',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    Recados <span class="nav-dot" id="dotRecados"></span>
   </button>
   <button onclick="showTab('historico',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -295,7 +295,7 @@
 <main>
 
   <!-- ===== UPLOAD ===== -->
-  <div id="tab-upload" class="tab active">
+  <div id="tab-upload" class="tab">
     <div class="card">
       <div class="card-body">
         <p class="card-title">Enviar arquivos</p>
@@ -378,7 +378,7 @@
   </div>
 
   <!-- ===== RECADOS ===== -->
-  <div id="tab-recados" class="tab">
+  <div id="tab-recados" class="tab active">
     <div class="card">
       <div class="card-body">
         <p class="card-title">Recados entre computadores</p>
@@ -482,6 +482,7 @@
       appIniciado = true;
       definirComputador(false);
       iniciarTempoReal();
+      renderRecados(); // Recados é a aba que abre primeiro
     }
   }
 
