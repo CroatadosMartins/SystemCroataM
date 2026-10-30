@@ -236,6 +236,15 @@
     .recado-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .recado-top b { color: var(--accent-strong); }
     .recado-texto { white-space: pre-wrap; word-break: break-word; font-size: 0.92rem; line-height: 1.5; }
+    .recado-img { display: block; max-width: 220px; max-height: 160px; margin-top: 8px; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; object-fit: cover; }
+    .recado-anexo { display: none; align-items: center; gap: 10px; margin-top: 10px; padding: 8px; border: 1px dashed var(--dash); border-radius: 8px; background: var(--soft); font-size: 0.8rem; color: var(--muted); }
+    .recado-anexo.show { display: flex; }
+    .recado-anexo img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; }
+    .recado-form.drag textarea { border-color: var(--accent); background: var(--accent-light); }
+    .editor-area img { max-width: 100%; max-height: 420px; width: auto; height: auto; border-radius: 8px; cursor: zoom-in; }
+    .zoom-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+    .zoom-overlay.show { display: flex; }
+    .zoom-overlay img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; box-shadow: var(--shadow); z-index: 120; display: none; max-width: calc(100% - 32px); }
     .toast.show { display: block; }
     .nav-dot { display: none; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
@@ -385,10 +394,17 @@
         <p class="card-title">Recados entre computadores</p>
         <p class="card-sub">Mensagem curta que aparece na hora em todos os computadores conectados.</p>
         <div class="recado-form">
-          <textarea id="recadoTexto" maxlength="10000" placeholder="Ex.: Arquivo da escala já está no Histórico." oninput="contarRecado()"></textarea>
+          <textarea id="recadoTexto" maxlength="10000" placeholder="Ex.: Arquivo da escala já está no Histórico. (Para mandar imagem: cole com Ctrl+V, arraste aqui ou use o botão 📎)" oninput="contarRecado()"></textarea>
+        </div>
+        <input type="file" id="recadoImgInput" accept="image/*" />
+        <div class="recado-anexo" id="recadoAnexo">
+          <img id="recadoAnexoImg" alt="Imagem anexada" />
+          <span id="recadoAnexoNome"></span>
+          <button type="button" class="clear-btn" style="margin-left:auto" onclick="removerAnexoRecado()">✕ Remover</button>
         </div>
         <div class="actions">
           <button class="btn btn-primary" onclick="enviarRecado()">Enviar recado</button>
+          <label class="btn btn-outline" for="recadoImgInput" title="Anexar imagem">📎 Imagem</label>
           <span class="recado-contador" id="recadoContador">0 / 10.000</span>
         </div>
         <p class="status-text" id="recadoStatus"></p>
@@ -426,6 +442,8 @@
 </main>
 
 <div class="toast" id="toast"></div>
+
+<div class="zoom-overlay" id="zoomOverlay" onclick="fecharZoom()"><img id="zoomImg" alt="" /></div>
 
 <div class="scroll-nav" id="scrollNav">
   <button class="scroll-nav-btn" title="Ir para o topo" onclick="scrollTopo()">
@@ -543,7 +561,7 @@
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: RECADOS_TABLE }, (p) => {
         if (p.eventType === 'INSERT' && p.new.computador !== nomeComputador()) {
-          aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${p.new.texto.slice(0, 80)}`);
+          aviso(`💬 Recado de ${p.new.computador || 'outro computador'}: ${(p.new.texto || '📷 imagem').slice(0, 80)}`);
           if (!abaAtiva('recados')) document.getElementById('dotRecados').classList.add('show');
         }
         if (abaAtiva('recados')) renderRecados();
@@ -565,7 +583,8 @@
           <span><b>🖥️ ${escHtml(r.computador || 'Sem nome')}</b> · ${new Date(r.criado_em).toLocaleString('pt-BR')}</span>
           <button class="clear-btn" title="Apagar recado" onclick="apagarRecado(${r.id})">Apagar</button>
         </div>
-        <div class="recado-texto">${escHtml(r.texto)}</div>
+        ${r.texto ? `<div class="recado-texto">${escHtml(r.texto)}</div>` : ''}
+        ${r.imagem ? `<img class="recado-img" src="${escHtml(r.imagem)}" alt="Imagem do recado" loading="lazy" onclick="abrirZoom(this.src)" />` : ''}
       </div>`).join('');
   }
   window.renderRecados = renderRecados;
@@ -575,15 +594,86 @@
     document.getElementById('recadoContador').textContent = `${n.toLocaleString('pt-BR')} / 10.000`;
   };
 
+  // ── Imagens: reduz antes de enviar e mostra ampliada no clique ────────────
+  // Foto de celular (3–5 MB) vira ~300 KB, poupando o 1 GB grátis do Supabase.
+  async function reduzirImagem(file, lado = 1600) {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+    try {
+      const bmp = await createImageBitmap(file);
+      const escala = Math.min(1, lado / Math.max(bmp.width, bmp.height));
+      if (escala === 1 && file.size < 500 * 1024) return file;
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * escala);
+      c.height = Math.round(bmp.height * escala);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+      return blob && blob.size < file.size ? blob : file;
+    } catch { return file; }
+  }
+
+  async function enviarImagem(file, prefixo) {
+    const img = await reduzirImagem(file);
+    const ext = img.type === 'image/png' ? 'png' : img.type === 'image/gif' ? 'gif' : 'jpg';
+    const nome = `${Date.now()}-${prefixo}.${ext}`;
+    const { error } = await sb.storage.from(BUCKET).upload(nome, img, { contentType: img.type || 'image/jpeg' });
+    if (error) throw error;
+    return sb.storage.from(BUCKET).getPublicUrl(nome).data.publicUrl;
+  }
+
+  window.abrirZoom = function(src) {
+    document.getElementById('zoomImg').src = src;
+    document.getElementById('zoomOverlay').classList.add('show');
+  };
+  window.fecharZoom = function() {
+    document.getElementById('zoomOverlay').classList.remove('show');
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharZoom(); });
+
+  // ── Imagem no recado (colar, arrastar ou 📎) ──────────────────────────────
+  let recadoImg = null;
+
+  function anexarRecado(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    recadoImg = file;
+    document.getElementById('recadoAnexoImg').src = URL.createObjectURL(file);
+    document.getElementById('recadoAnexoNome').textContent = 'Imagem pronta para enviar';
+    document.getElementById('recadoAnexo').classList.add('show');
+  }
+
+  window.removerAnexoRecado = function() {
+    recadoImg = null;
+    document.getElementById('recadoImgInput').value = '';
+    document.getElementById('recadoAnexo').classList.remove('show');
+  };
+
+  document.getElementById('recadoImgInput').addEventListener('change', e => anexarRecado(e.target.files[0]));
+  document.getElementById('recadoTexto').addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (item) { e.preventDefault(); anexarRecado(item.getAsFile()); }
+  });
+  const formRecado = document.querySelector('.recado-form');
+  ['dragenter','dragover'].forEach(ev => formRecado.addEventListener(ev, e => { e.preventDefault(); formRecado.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev => formRecado.addEventListener(ev, e => { e.preventDefault(); formRecado.classList.remove('drag'); }));
+  formRecado.addEventListener('drop', e => anexarRecado(e.dataTransfer.files[0]));
+
   window.enviarRecado = async function() {
     const campo = document.getElementById('recadoTexto');
     const status = document.getElementById('recadoStatus');
     const texto = campo.value.trim();
-    if (!texto) { status.textContent = 'Escreva o recado antes de enviar.'; return; }
+    if (!texto && !recadoImg) { status.textContent = 'Escreva o recado ou anexe uma imagem.'; return; }
     status.textContent = 'Enviando...';
-    const { error } = await sb.from(RECADOS_TABLE).insert({ texto, computador: nomeComputador() });
+    let imagem = null;
+    if (recadoImg) {
+      try { imagem = await enviarImagem(recadoImg, 'recado'); }
+      catch (err) { status.textContent = `Erro ao enviar a imagem: ${err.message}`; return; }
+    }
+    const { error } = await sb.from(RECADOS_TABLE).insert({ texto, imagem, computador: nomeComputador() });
     if (error) { status.textContent = `Erro: ${error.message}`; return; }
     campo.value = '';
+    removerAnexoRecado();
     contarRecado();
     status.textContent = 'Recado enviado.';
     renderRecados();
@@ -591,7 +681,9 @@
 
   window.apagarRecado = async function(id) {
     if (!confirm('Apagar este recado para todos os computadores?')) return;
-    await sb.from(RECADOS_TABLE).delete().eq('id', id);
+    const { data } = await sb.from(RECADOS_TABLE).delete().eq('id', id).select('imagem');
+    const path = pathFromUrl(data?.[0]?.imagem);
+    if (path) { try { await sb.storage.from(BUCKET).remove([path]); } catch {} }
     renderRecados();
   };
 
@@ -1158,6 +1250,26 @@
     document.getElementById('editor').focus();
   };
 
+  document.getElementById('editor').addEventListener('paste', async e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (!item) return;
+    e.preventDefault();
+    const status = document.getElementById('textoStatus');
+    status.textContent = 'Enviando imagem...';
+    try {
+      const url = await enviarImagem(item.getAsFile(), 'imagem-texto');
+      document.getElementById('editor').focus();
+      document.execCommand('insertHTML', false, `<img src="${url}" alt="">`);
+      status.textContent = '';
+    } catch (err) { status.textContent = `Erro ao enviar a imagem: ${err.message}`; }
+  });
+  document.getElementById('editor').addEventListener('click', e => {
+    if (e.target.tagName === 'IMG') abrirZoom(e.target.src);
+  });
+  document.getElementById('viewerBody').addEventListener('click', e => {
+    if (e.target.tagName === 'IMG') abrirZoom(e.target.src);
+  });
+
   window.limparEditor = function() {
     if (confirm('Apagar o conteúdo do editor?'))
       document.getElementById('editor').innerHTML = '';
@@ -1167,7 +1279,7 @@
     const editor    = document.getElementById('editor');
     const nomeInput = document.getElementById('nomeArquivoTxt');
     const status    = document.getElementById('textoStatus');
-    if (!editor.innerText.trim()) { status.textContent = 'Escreva algo antes de salvar.'; return; }
+    if (!editor.innerText.trim() && !editor.querySelector('img')) { status.textContent = 'Escreva algo antes de salvar.'; return; }
     const nomeBase = (nomeInput.value.trim() || 'anotacao')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
       .replace(/[^a-zA-Z0-9_-]/g,'-').toLowerCase();
